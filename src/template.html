@@ -456,7 +456,7 @@ const ATLAS = /*ATLAS*/{};
     else if (s === 'soft') { ctx.shadowColor = '#6cc6ff'; ctx.shadowBlur = 11; }
     else if (s === 'bad') { ctx.shadowColor = '#ff3b3b'; ctx.shadowBlur = 14; }
     const im = IMG['blk_' + col]; const bs = T - 4;
-    if (im && im.naturalWidth) { ctx.drawImage(im, -bs / 2, -bs / 2, bs, bs); if (s) ctx.drawImage(im, -bs / 2, -bs / 2, bs, bs); }
+    if (im && im.naturalWidth) { const bh = bs * im.naturalHeight / im.naturalWidth; ctx.drawImage(im, -bs / 2, -bh / 2, bs, bh); if (s) ctx.drawImage(im, -bs / 2, -bh / 2, bs, bh); }
     ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
     // word
     const jp = !document.body.classList.contains('nojp');
