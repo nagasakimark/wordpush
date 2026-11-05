@@ -106,6 +106,34 @@ button { font: inherit; cursor: pointer; border: 0; padding: 0; background: none
 @keyframes starin { from { transform: scale(0) rotate(-90deg); } }
 #winbox .sent { text-align: left; margin: 5px 0; } #winbox .stat { font-weight: 900; margin: 4px 0 10px; }
 #winbox .btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+/* tutorial */
+#tut { position: absolute; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; background: rgba(60,30,0,.35); padding: 8px; }
+#tutbox { position: relative; width: min(980px, 100%); height: min(560px, 100%); background: linear-gradient(var(--cream), var(--cream2)); border: 6px solid var(--woodD); border-radius: 26px;
+  box-shadow: 0 10px 0 rgba(0,0,0,.3), inset 0 4px 0 rgba(255,255,255,.7); display: flex; flex-direction: column; padding: 10px 22px 12px; animation: pop .35s cubic-bezier(.3,1.6,.5,1); }
+#tutHead { display: flex; align-items: center; justify-content: center; gap: 10px; height: 54px; flex: none; }
+#tutHead h2 { margin: 0; font-size: 30px; color: #fff; -webkit-text-stroke: 7px var(--woodD); paint-order: stroke fill; text-shadow: 0 4px 0 var(--woodD); text-align: center; }
+#tutBody { flex: 1; min-height: 0; display: flex; align-items: center; gap: 18px; }
+#tutGuide { flex: none; width: 190px; text-align: center; } #tutGuide img { height: 170px; animation: cheer 1.1s ease-in-out infinite; filter: drop-shadow(0 4px 0 rgba(0,0,0,.2)); }
+#tutMain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; align-items: stretch; justify-content: center; height: 100%; }
+.say { background: #fff; border: 4px solid var(--woodD); border-radius: 20px; padding: 10px 16px; font-weight: 900; font-size: 21px; line-height: 1.5; position: relative; box-shadow: 0 4px 0 rgba(60,30,0,.25); }
+.say::before { content: ""; position: absolute; left: -18px; top: 30px; border: 10px solid transparent; border-right: 14px solid var(--woodD); }
+.say small { display: block; font-size: 15px; opacity: .85; margin-top: 2px; }
+.say em { font-style: normal; color: #d4531c; } .say b.g { color: #1f9d4b; } .say b.r { color: #c4271e; }
+.vis { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; background: rgba(255,255,255,.55); border: 3px dashed #d9b97a; border-radius: 18px; padding: 8px; }
+.vis img.s { height: 84px; } .vis img.hh { height: 104px; }
+.vcol { display: flex; flex-direction: column; align-items: center; gap: 4px; font-weight: 900; font-size: 15px; text-align: center; }
+.vcol .lab { padding: 1px 10px; border-radius: 99px; color: #fff; border: 2px solid var(--woodD); text-shadow: 0 1px 0 rgba(70,35,5,.8); font-size: 14px; }
+.vcol .big { font-size: 28px; color: #d4531c; -webkit-text-stroke: 5px #fff; paint-order: stroke fill; line-height: 1; }
+.tb { position: relative; display: inline-block; width: 78px; height: 74px; } .tb img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 3px 0 rgba(60,30,0,.3)); }
+.tb b { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 17px; -webkit-text-stroke: 4px #5a2f0d; paint-order: stroke fill; }
+.arrow { font-size: 34px; font-weight: 900; color: #d4531c; } .ok { color: #1f9d4b; font-size: 34px; font-weight: 900; } .ng { color: #d22; font-size: 34px; font-weight: 900; }
+.row { display: flex; align-items: center; gap: 6px; }
+.vis .eq { font-size: 20px; font-weight: 900; }
+#tutNav { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; height: 54px; padding-top: 8px; }
+#tutDots { display: flex; gap: 6px; } #tutDots i { width: 11px; height: 11px; border-radius: 50%; background: #d9b97a; border: 2px solid var(--woodD); } #tutDots i.on { background: #ff7a3c; transform: scale(1.25); }
+.sbtn.ghost { filter: grayscale(.4) drop-shadow(0 3px 0 rgba(60,30,0,.3)); opacity: .85; }
+@media (max-height: 520px) { .say { font-size: 18px; } #tutGuide img { height: 130px; } #tutGuide { width: 150px; } }
 body.nojp .jpx { display: none; }
 </style>
 </head>
@@ -115,6 +143,7 @@ body.nojp .jpx { display: none; }
 <div id="menu">
   <div id="logo"></div>
   <p class="sub">ことばブロックを おして、ぶんを つくろう!</p>
+  <div style="margin:0 0 8px"><button class="sbtn" id="bHow" style="height:46px">あそびかた を みる</button></div>
   <div class="legend">
     <span><b class="chip t-noun">DOG</b> なまえ</span><span><b class="chip t-can">CAN</b> つなぐ</span>
     <span><b class="chip t-verb">SWIM</b> うごき</span><span><b class="chip t-adj">OPEN</b> ようす</span>
@@ -127,7 +156,7 @@ body.nojp .jpx { display: none; }
   <div id="top">
     <button class="sbtn blue" id="bMenu">メニュー</button>
     <div class="title stroke" id="ttl"></div>
-    <button class="sbtn yellow" id="bHint">ヒント</button>
+    <button class="sbtn blue" id="bHow2">あそびかた</button><button class="sbtn yellow" id="bHint">ヒント</button>
     <button class="sbtn green" id="bUndo">もどす</button>
     <button class="sbtn red" id="bReset">やりなおし</button>
   </div>
@@ -149,6 +178,7 @@ body.nojp .jpx { display: none; }
   <div id="dpad"><button style="left:52px;top:0" data-d="U" id="dU"></button><button style="left:0;top:52px" data-d="L" id="dL"></button>
     <button style="left:104px;top:52px" data-d="R" id="dR"></button><button style="left:52px;top:104px" data-d="D" id="dD"></button></div>
 </div>
+<div id="tut" class="hidden"><div id="tutbox"><div id="tutHead"><h2 id="tutT"></h2></div><div id="tutBody"><div id="tutGuide"><img id="tutImg" alt=""></div><div id="tutMain"><div class="say" id="tutSay"></div><div class="vis" id="tutVis"></div></div></div><div id="tutNav"><button class="sbtn sm red" id="tSkip">スキップ</button><div id="tutDots"></div><div style="display:flex;gap:8px"><button class="sbtn sm blue" id="tBack">◀ もどる</button><button class="sbtn green" id="tNext">つぎへ ▶</button></div></div></div></div>
 <div id="win" class="hidden"><div id="winbox"></div></div>
 
 <script>
@@ -733,6 +763,15 @@ const ATLAS = {"grass0":"data:image/webp;base64,UklGRqQJAABXRUJQVlA4WAoAAAAQAAAA
   })));
   const src = k => ATLAS[k];
 
+
+  // ---------- practice levels (tutorial) ----------
+  const PRP = [
+    { id: 'れんしゅう1', title: 'れんしゅう 1：あるこう', gp: 'うごく れんしゅう', hero: HERO.I, tip: '↑ ↓ ← → キーで あるこう。⭐ に さわったら クリア!', hint: '⭐ まで あるいていこう。', words: [], map: ['#########', '#@......#', '#.......#', '#......S#', '#########'] },
+    { id: 'れんしゅう2', title: 'れんしゅう 2：おそう', gp: 'ブロックを おす', hero: HERO.I, tip: 'ブロックに ぶつかると、おせるよ。みちを あけて ⭐ へ!', hint: 'ブロックを みぎへ おして、へやの なかまで いれよう。そのあと ブロックの よこを とおるよ。', words: ['DOG'],
+      map: ['##########', '#####....#', '#@.1.....#', '#####...S#', '##########'] }
+  ];
+  PRP.forEach((d, i) => PRP[i] = WP.parseLevel(d));
+  let mode = 'main';
   let idx = 0, L, st, hist, moves, locked, soundOn = false, hintOn = false, T = 64, FW = 14, R = null, prevOk = '', prevRules = null;
   let cleared = new Set();
   try { cleared = new Set(JSON.parse(localStorage.getItem('wordpush_cleared') || '[]')); } catch (e) {}
@@ -745,7 +784,7 @@ const ATLAS = {"grass0":"data:image/webp;base64,UklGRqQJAABXRUJQVlA4WAoAAAAQAAAA
 
   // skin DOM buttons
   function skin() {
-    [['bMenu', 'btn_blue'], ['bHint', 'btn_yellow'], ['bUndo', 'btn_green'], ['bReset', 'btn_red'], ['bJp', 'btn_blue'], ['bSnd', 'btn_green']]
+    [['bMenu', 'btn_blue'], ['bHow', 'btn_yellow'], ['bHow2', 'btn_blue'], ['bHint', 'btn_yellow'], ['bUndo', 'btn_green'], ['bReset', 'btn_red'], ['bJp', 'btn_blue'], ['bSnd', 'btn_green'], ['tSkip', 'btn_red'], ['tBack', 'btn_blue'], ['tNext', 'btn_green']]
       .forEach(([id, k]) => { $('#' + id).style.backgroundImage = 'url(' + src(k) + ')'; });
     [['dU', 'arr_u'], ['dL', 'arr_l'], ['dR', 'arr_r'], ['dD', 'arr_d']].forEach(([id, k]) => { $('#' + id).style.backgroundImage = 'url(' + src(k) + ')'; });
     const lg = $('#logo'); lg.innerHTML = '';
@@ -775,11 +814,11 @@ const ATLAS = {"grass0":"data:image/webp;base64,UklGRqQJAABXRUJQVlA4WAoAAAAQAAAA
 
   // ---------- level ----------
   let E = null; // entities for animation
-  function startLevel(i) {
-    idx = i; L = PARSED[i]; st = L.st0; hist = []; moves = 0; locked = false; hintOn = false; won = false;
+  function startLevel(i, practice) {
+    mode = practice ? 'pr' : 'main'; idx = i; L = (practice ? PRP : PARSED)[i]; st = L.st0; hist = []; moves = 0; locked = false; hintOn = false; won = false;
     $('#menu').classList.add('hidden'); $('#win').classList.add('hidden'); $('#game').classList.remove('hidden');
-    try { history.replaceState(null, '', '#level=' + L.id); } catch (e) {}
-    $('#ttl').innerHTML = 'Level ' + L.id + '：' + L.title + '<small>' + L.gp + '</small>';
+    if (!practice) { try { history.replaceState(null, '', '#level=' + L.id); } catch (e) {} }
+    $('#ttl').innerHTML = (practice ? '' : 'Level ' + L.id + '：') + L.title + '<small>' + L.gp + '</small>';
     $('#hImg').src = src(heroKey(L) + '_idle');
     $('#hText').innerHTML = 'あなたは <b>' + L.hero.jp + '</b><br>' + (L.goal || '⭐ に さわろう!');
     parts.length = 0;
@@ -854,8 +893,22 @@ const ATLAS = {"grass0":"data:image/webp;base64,UklGRqQJAABXRUJQVlA4WAoAAAAQAAAA
 
   let won = false;
   function win() {
-    locked = true; won = true; cleared.add(L.id); save(); sfx('win'); E.hero.cheer = 1;
+    locked = true; won = true; if (mode === 'main') { cleared.add(L.id); save(); } sfx('win'); E.hero.cheer = 1;
     for (let k = 0; k < 40; k++) confettiP(st.hx + .5, st.hy + .3);
+    if (mode === 'pr') {
+      const lastP = idx >= PRP.length - 1;
+      setTimeout(() => {
+        if (!won) return;
+        $('#winbox').innerHTML = '<h2>できた!</h2><img class="hero" src="' + src(heroKey(L) + '_cheer') + '">' +
+          '<div class="stat" style="font-size:19px;margin:8px 0 12px">' + (lastP ? 'すごい! じゃあ、ほんばんに いこう!' : 'いいね! つぎの れんしゅうへ!') + '</div>' +
+          '<div class="btns"><button class="sbtn blue" id="wMenu">メニュー</button><button class="sbtn red" id="wAgain">もういちど</button><button class="sbtn green" id="wNext">' + (lastP ? 'Level 1 へ ▶' : 'つぎへ ▶') + '</button></div>';
+        [['wMenu', 'btn_blue'], ['wAgain', 'btn_red'], ['wNext', 'btn_green']].forEach(([id, k]) => { $('#' + id).style.backgroundImage = 'url(' + src(k) + ')'; });
+        $('#win').classList.remove('hidden');
+        $('#wMenu').onclick = showMenu; $('#wAgain').onclick = restart;
+        $('#wNext').onclick = () => lastP ? startLevel(0) : startLevel(idx + 1, true);
+      }, 800);
+      return;
+    }
     const par = PAR[idx] || moves;
     const stars = moves <= par * 1.4 ? 3 : moves <= par * 2.5 ? 2 : 1;
     const Rr = WP.rulesOf(L, st);
@@ -1113,13 +1166,67 @@ const ATLAS = {"grass0":"data:image/webp;base64,UklGRqQJAABXRUJQVlA4WAoAAAAQAAAA
   window.addEventListener('resize', layout);
   if (window.ResizeObserver) new ResizeObserver(layout).observe($('#boardWrap'));
 
+
+  // ---------- tutorial ----------
+  const tb = w => { const c = BLK[WP.WORDS[w].t]; return '<span class="tb"><img src="' + src('blk_' + c) + '"><b>' + w + '</b></span>'; };
+  const im = (k, c) => '<img class="' + (c || 's') + '" src="' + src(k) + '">';
+  const lab = (t, c) => '<span class="lab" style="background:' + c + '">' + t + '</span>';
+  const col = (inner, label) => '<div class="vcol">' + inner + (label || '') + '</div>';
+  const SL = [
+    { t: 'ようこそ!', g: 'cheer', say: 'こんにちは! いっしょに あそぼう!<small>⭐ に さわったら クリア だよ。</small>', vis: () => im('I_idle', 'hh') + '<span class="arrow">▶ ▶ ▶</span>' + im('star', 'hh') },
+    { t: 'あるきかた', g: 'idle', say: '<em>↑ ↓ ← →</em> の キーで あるくよ。<small>W A S D でも いいよ。スマホは ゆびで スワイプ!</small>',
+      vis: () => '<div style="position:relative;width:200px;height:130px">' + [['arr_u', 74, 0], ['arr_l', 14, 62], ['arr_d', 74, 62], ['arr_r', 134, 62]].map(a => '<img src="' + src(a[0]) + '" style="position:absolute;width:56px;left:' + a[1] + 'px;top:' + a[2] + 'px">').join('') + '</div>' },
+    { t: 'ブロックを おそう', g: 'hop', say: 'ブロックに ぶつかると、<em>おせる</em>よ!<small>ブロックは ことばが かいて あるよ。</small>',
+      vis: () => im('I_idle', 'hh') + tb('CAT') + '<span class="arrow">▶</span>' + '<span style="width:24px"></span>' + tb('CAT') },
+    { t: 'ブロックは ことば!', g: 'idle', say: 'ブロックの いろに は いみが あるよ。<small>ならべて、えいごの ぶんを つくろう!</small>',
+      vis: () => [['DOG', 'なまえ', '#f59a2e'], ['CAN', 'つなぐ', '#e9b81c'], ['SWIM', 'うごき', '#ee6f8c'], ['OPEN', 'ようす', '#4fc27a']].map(a => col(tb(a[0]), lab(a[1], a[2]))).join('') },
+    { t: 'えいごの ならびかた', g: 'cheer', say: 'えいごは <em>S → V → O</em> の じゅんばん!<small>S＝だれが　V＝どうする　O＝なにを</small>',
+      vis: () => '<div class="row">' + col(tb('I'), lab('S だれが', '#f59a2e')) + col(tb('WANT'), lab('V どうする', '#e9b81c')) + col(tb('APPLE'), lab('O なにを', '#f59a2e')) + '<span class="eq">＝ わたしは リンゴが ほしい</span></div>' },
+    { t: 'じゅんばん だいじ!', g: 'bump', say: 'ならびが ちがうと、ぶんに ならないよ。<small>にほんごと ちがうから、きを つけてね。</small>',
+      vis: () => '<div class="vcol" style="gap:14px"><div class="row"><span class="ok">○</span>' + tb('I') + tb('WANT') + tb('APPLE') + '</div><div class="row"><span class="ng">×</span>' + tb('APPLE') + tb('WANT') + tb('I') + '</div></div>' },
+    { t: 'よむ むき', g: 'idle', say: 'ぶんは <em>ひだり → みぎ</em>、<em>うえ → した</em> に よむよ。<small>ブロックは たてにも ならべられるよ。</small>',
+      vis: () => '<div class="row">' + tb('DOG') + tb('CAN') + tb('SWIM') + '</div><span style="width:30px"></span><div class="vcol">' + tb('DOG') + tb('CAN') + tb('SWIM') + '</div>' },
+    { t: 'ぶんが できると…', g: 'cheer', say: 'ぶんが できると、<b class="g">みどりに ひかる</b>よ。<small>ふしぎな ちからが でるよ! たとえば DOOR IS OPEN → ドアが あく!</small>',
+      vis: () => im('door_closed', 'hh') + '<span class="arrow">▶</span>' + '<div class="row">' + tb('DOOR') + tb('IS') + tb('OPEN') + '</div><span class="arrow">▶</span>' + im('door_open', 'hh') },
+    { t: 'やさしい えいご', g: 'idle', say: 'この ゲームの えいごは、<em>かんたんに して ある</em>よ。<small>ほんとうの えいごは「The door is open.」みたいに a や the が つくよ。ぜんぶ おおきい もじで かいて あるよ。</small>',
+      vis: () => '<div class="vcol"><div class="row">' + tb('DOOR') + tb('IS') + tb('OPEN') + '</div>' + lab('ゲームの えいご', '#e9b81c') + '</div><span class="arrow">≒</span><div class="vcol"><span style="font-size:30px;font-weight:900">The door is open.</span>' + lab('ほんとうの えいご', '#4cb8ff') + '</div>' },
+    { t: 'こまった ときは', g: 'bump', say: 'まちがえても だいじょうぶ! なんどでも やりなおせるよ。',
+      vis: () => '<div class="vcol"><button class="sbtn" style="background-image:url(' + src('btn_green') + ');pointer-events:none">もどす</button><b>キー: Z</b></div><div class="vcol"><button class="sbtn" style="background-image:url(' + src('btn_red') + ');pointer-events:none">やりなおし</button><b>キー: R</b></div><div class="vcol"><button class="sbtn" style="background-image:url(' + src('btn_yellow') + ');pointer-events:none">ヒント</button><b>キー: H</b></div>' },
+    { t: 'れんしゅう しよう!', g: 'cheer', say: 'まず 2つ れんしゅう しよう!<small>そのあと ほんばん。がんばろう!</small>', vis: () => im('I_cheer', 'hh') + im('star', 'hh') + im('DOG_cheer', 'hh') }
+  ];
+  let ti = 0, tutAfter = null;
+  const GKEY = { I: 'I', BOY: 'BOY', GIRL: 'GIRL' };
+  function showTut(n) {
+    ti = Math.max(0, Math.min(SL.length - 1, n)); const sl = SL[ti];
+    $('#tutT').textContent = sl.t; $('#tutImg').src = src('I_' + sl.g);
+    $('#tutSay').innerHTML = sl.say; $('#tutVis').innerHTML = sl.vis();
+    $('#tutDots').innerHTML = SL.map((_, i) => '<i class="' + (i === ti ? 'on' : '') + '"></i>').join('');
+    $('#tBack').style.visibility = ti ? 'visible' : 'hidden';
+    const last = ti === SL.length - 1; $('#tNext').textContent = last ? 'れんしゅう ▶' : 'つぎへ ▶';
+    $('#tSkip').style.visibility = last ? 'hidden' : 'visible';
+  }
+  function openTut() { $('#tut').classList.remove('hidden'); showTut(0); }
+  function closeTut(toPractice) {
+    $('#tut').classList.add('hidden'); try { localStorage.setItem('wordpush_tut', '1'); } catch (e) {}
+    if (toPractice) startLevel(0, true);
+  }
+  ['tSkip', 'tBack', 'tNext'].forEach(id => { });
+  $('#tSkip').onclick = () => closeTut(false);
+  $('#tBack').onclick = () => showTut(ti - 1);
+  $('#tNext').onclick = () => { if (ti >= SL.length - 1) closeTut(true); else showTut(ti + 1); };
+  $('#bHow').onclick = openTut; $('#bHow2').onclick = openTut;
+  document.addEventListener('keydown', e => {
+    if ($('#tut').classList.contains('hidden')) return;
+    e.stopImmediatePropagation(); e.preventDefault(); if (e.key === 'ArrowRight' || e.key === 'Enter') $('#tNext').click(); else if (e.key === 'ArrowLeft') $('#tBack').click(); else if (e.key === 'Escape') closeTut(false);
+  }, true);
+
   loaded.then(() => {
     skin();
     const m = location.hash.match(/level=(\d+)/);
-    if (m && PARSED[+m[1] - 1]) startLevel(+m[1] - 1); else showMenu();
+    if (m && PARSED[+m[1] - 1]) startLevel(+m[1] - 1); else { showMenu(); let seen = '1'; try { seen = localStorage.getItem('wordpush_tut'); } catch (e) {} if (!seen) openTut(); }
     requestAnimationFrame(loop);
   });
-  window.__wp = { go, undo, restart, startLevel, get state() { return { st, moves, idx }; } };
+  window.__wp = { go, undo, restart, startLevel, openTut, get state() { return { st, moves, idx }; } };
 })();
 </script>
 </body>
