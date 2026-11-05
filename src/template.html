@@ -5,137 +5,119 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Word Push! ことばブロック</title>
 <style>
-:root { --t: 64px; --ink: #23415a; --sun: #ffcf3f; --sunD: #e0a800; --sky: #8fd8ff; }
+:root { --ink: #4a2a10; --cream: #fff4d6; --cream2: #ffe9b0; --wood: #a8642a; --woodD: #6b3a12; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { margin: 0; height: 100%; overflow: hidden; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #7fd2ff; }
 body {
   font-family: "Arial Rounded MT Bold", "Hiragino Maru Gothic ProN", "M PLUS Rounded 1c", "Noto Sans JP", "Meiryo", system-ui, sans-serif;
-  color: var(--ink);
-  background: radial-gradient(circle at 15% 8%, #fff7c2 0 60px, transparent 62px), linear-gradient(#7fd2ff 0%, #d6f3ff 50%, #b9ec8e 100%);
+  color: var(--ink); user-select: none; -webkit-user-select: none;
 }
+#bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; }
 .hidden { display: none !important; }
-button { font: inherit; cursor: pointer; }
-.btn {
-  background: var(--sun); color: #5a3a00; border: 0; border-bottom: 5px solid var(--sunD);
-  border-radius: 16px; padding: 8px 14px; font-weight: 800; font-size: 16px; line-height: 1.1;
-}
-.btn:active { transform: translateY(3px); border-bottom-width: 2px; }
-.btn.blue { background: #4cb8ff; color: #fff; border-bottom-color: #1d8fdc; }
-.btn.green { background: #5fd38d; color: #0b3d22; border-bottom-color: #2fa75f; }
-.btn.pink { background: #ff7aa2; color: #fff; border-bottom-color: #d9487a; }
+button { font: inherit; cursor: pointer; border: 0; padding: 0; background: none; color: inherit; }
+.stroke { text-shadow: -2px -2px 0 var(--woodD), 2px -2px 0 var(--woodD), -2px 2px 0 var(--woodD), 2px 2px 0 var(--woodD), 0 3px 0 var(--woodD); }
 
-/* ---------- MENU ---------- */
-#menu { position: absolute; inset: 0; overflow-y: auto; padding: 18px 16px 30px; text-align: center; }
-#menu h1 { margin: 6px 0 0; font-size: clamp(36px, 7vw, 64px); letter-spacing: 1px; color: #ff6f3c; text-shadow: 0 4px 0 #fff, 0 7px 0 rgba(0,0,0,.12); }
-#menu .sub { margin: 4px 0 14px; font-weight: 800; font-size: clamp(15px, 2.6vw, 20px); }
-.legend { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 0 auto 16px; }
-.legend span { font-size: 14px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,.7); padding: 4px 10px; border-radius: 99px; }
-.chip { display: inline-block; min-width: 54px; text-align: center; padding: 3px 8px; border-radius: 9px; font-weight: 900; font-size: 13px; box-shadow: 0 3px 0 rgba(0,0,0,.22); }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; max-width: 980px; margin: 0 auto; }
+/* sprite buttons */
+.sbtn {
+  background-size: 100% 100%; background-repeat: no-repeat; color: #fff; font-weight: 900; font-size: 16px; letter-spacing: .5px;
+  height: 44px; padding: 0 20px; white-space: nowrap; filter: drop-shadow(0 3px 0 rgba(60,30,0,.35)); transition: transform .08s;
+  text-shadow: -1.5px -1.5px 0 rgba(70,35,5,.9), 1.5px -1.5px 0 rgba(70,35,5,.9), -1.5px 1.5px 0 rgba(70,35,5,.9), 1.5px 1.5px 0 rgba(70,35,5,.9);
+}
+.sbtn:hover { transform: translateY(-2px) scale(1.04); } .sbtn:active { transform: translateY(2px) scale(.97); }
+.sbtn.sm { height: 34px; padding: 0 14px; font-size: 13px; }
+
+/* chips (same colours as blocks) */
+.chip { display: inline-block; min-width: 46px; text-align: center; padding: 2px 8px; border-radius: 9px; font-weight: 900; font-size: 13px; color: #fff;
+  border: 2px solid var(--woodD); box-shadow: 0 2px 0 rgba(0,0,0,.25), inset 0 2px 0 rgba(255,255,255,.4);
+  text-shadow: 0 1px 0 rgba(70,35,5,.8); }
+.t-pro, .t-noun { background: #f59a2e; } .t-can, .t-cant, .t-is, .t-want, .t-wants { background: #e9b81c; }
+.t-verb { background: #ee6f8c; } .t-adj { background: #4fc27a; }
+
+/* MENU */
+#menu { position: absolute; inset: 0; overflow-y: auto; padding: 10px 18px 20px; text-align: center; z-index: 2; }
+#logo { display: flex; justify-content: center; gap: 2px; margin-top: 2px; height: 86px; align-items: flex-end; }
+#logo span {
+  display: inline-block; font-size: 70px; font-weight: 900; line-height: 1; color: #fff; transform-origin: 50% 100%;
+  -webkit-text-stroke: 9px var(--woodD); paint-order: stroke fill; text-shadow: 0 6px 0 var(--woodD), 0 10px 6px rgba(0,0,0,.25);
+  animation: jig 1.8s ease-in-out infinite;
+}
+#logo span.sp { width: 18px; }
+@keyframes jig { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-8px) rotate(2deg); } }
+#menu .sub { margin: 6px 0 8px; font-weight: 900; font-size: 18px; color: #fff; }
+.legend { display: flex; gap: 8px; justify-content: center; margin: 0 auto 10px; }
+.legend span { font-size: 13px; font-weight: 900; background: rgba(255,255,255,.85); padding: 3px 10px 3px 4px; border-radius: 99px; display: inline-flex; gap: 6px; align-items: center; border: 2px solid var(--woodD); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; max-width: 1280px; margin: 0 auto; }
 .card {
-  background: #fff; border: 0; border-radius: 20px; padding: 12px 10px 12px; text-align: center; color: var(--ink);
-  box-shadow: 0 6px 0 rgba(35,65,90,.18); position: relative; min-height: 104px;
+  position: relative; height: 112px; border-radius: 18px; background: linear-gradient(var(--cream), var(--cream2)); border: 4px solid var(--woodD);
+  box-shadow: 0 5px 0 rgba(60,30,0,.4), inset 0 3px 0 rgba(255,255,255,.7); transition: transform .1s; overflow: hidden; color: var(--ink);
 }
-.card:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(35,65,90,.18); }
-.card .n { position: absolute; left: 8px; top: 8px; background: #ff6f3c; color: #fff; border-radius: 50%; width: 30px; height: 30px; line-height: 30px; font-weight: 900; }
-.card .ti { margin: 18px 0 4px; font-weight: 900; font-size: 16px; }
-.card .gp { font-size: 12px; font-weight: 800; color: #fff; background: #4cb8ff; display: inline-block; padding: 2px 8px; border-radius: 99px; }
-.card .done { position: absolute; right: 8px; top: 6px; font-size: 22px; }
-.foot { margin-top: 18px; font-size: 13px; font-weight: 700; opacity: .75; }
+.card:hover { transform: translateY(-4px) rotate(-1deg); } .card:active { transform: translateY(2px); }
+.card .n { position: absolute; left: 6px; top: 5px; background: #ff6f3c; color: #fff; border-radius: 50%; width: 28px; height: 28px; line-height: 24px; font-weight: 900; font-size: 15px; border: 3px solid var(--woodD); }
+.card img.h { position: absolute; right: 4px; top: 4px; height: 48px; }
+.card .ti { position: absolute; left: 8px; right: 6px; top: 52px; font-weight: 900; font-size: 12.5px; line-height: 1.15; text-align: left; max-height: 29px; overflow: hidden; }
+.card .gp { position: absolute; left: 8px; bottom: 6px; font-size: 11px; font-weight: 900; color: #fff; background: #4cb8ff; padding: 1px 8px; border-radius: 99px; border: 2px solid #1d6fa8; white-space: nowrap; }
+.card .done { position: absolute; right: 6px; bottom: 2px; height: 30px; }
+.foot { margin: 12px 0 0; font-size: 12px; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
 
-/* ---------- GAME ---------- */
-#game { position: absolute; inset: 0; display: flex; flex-direction: column; }
-#top { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(255,255,255,.78); border-bottom: 4px solid var(--sun); flex-wrap: wrap; }
-#top .title { font-weight: 900; font-size: clamp(15px, 2.4vw, 22px); flex: 1; min-width: 140px; }
-#top .title small { display: inline-block; margin-left: 8px; font-size: 12px; background: #4cb8ff; color: #fff; padding: 2px 8px; border-radius: 99px; }
-#stage { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 310px; gap: 12px; padding: 10px 12px 12px; }
+/* GAME */
+#game { position: absolute; inset: 0; display: flex; flex-direction: column; z-index: 2; }
+#top { display: flex; align-items: center; gap: 8px; padding: 6px 12px; height: 56px; flex: none;
+  background: linear-gradient(#c98443, #a8642a); border-bottom: 5px solid var(--woodD); box-shadow: 0 4px 0 rgba(0,0,0,.2); }
+#top .title { flex: 1; min-width: 0; color: #fff; font-weight: 900; font-size: 21px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#top .title small { display: inline-block; margin-left: 10px; font-size: 12px; background: #4cb8ff; color: #fff; padding: 2px 10px; border-radius: 99px; border: 2px solid #1d6fa8; text-shadow: none; vertical-align: middle; }
+#stage { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 304px; gap: 6px; padding: 6px 10px 8px; }
 #boardWrap { position: relative; min-height: 0; min-width: 0; display: flex; align-items: center; justify-content: center; }
-#board { position: relative; border-radius: 18px; background: #9ae063; box-shadow: 0 8px 0 rgba(35,65,90,.2), 0 0 0 6px #fff; touch-action: none; }
-.tile { position: absolute; display: flex; align-items: center; justify-content: center; }
-.tile.floor.a { background: #a8e873; } .tile.floor.b { background: #9ce066; }
-.tile.bush { background: #3fa84b; border-radius: 10px; box-shadow: inset 0 -5px 0 rgba(0,0,0,.18); }
-.tile .em { line-height: 1; transition: transform .25s, opacity .25s; }
-.tile.river { background: #4cc3ff; box-shadow: inset 0 0 0 2px rgba(255,255,255,.35); }
-.tile.mountain { background: #b9d98a; } .tile.wall { background: #e8d8b8; } .tile.door { background: #e8c690; }
-.tile.river.frozen { background: #bfeaff; }
-.tile.terrain.pass .em { transform: scale(.5); opacity: .55; }
-.tile.river.frozen .em { transform: scale(1); opacity: 1; }
-.tile.terrain.can::after { content: "✓"; position: absolute; right: 3px; top: 1px; font-size: calc(var(--t) * .28); font-weight: 900; color: #1f9d4b; }
-.tile.goal .em { animation: bob 1.2s ease-in-out infinite; }
-.tile.wanted { box-shadow: inset 0 0 0 4px #ffd93b; border-radius: 12px; }
-@keyframes bob { 50% { transform: translateY(-8%) scale(1.08); } }
-
-.instant .blk, .instant #hero { transition: none !important; }
-.blk, #hero { position: absolute; left: 0; top: 0; transition: transform .12s ease-out; will-change: transform; }
-.blk {
-  border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-  font-weight: 900; box-shadow: 0 5px 0 rgba(0,0,0,.25), inset 0 3px 0 rgba(255,255,255,.35); user-select: none; z-index: 3; line-height: 1.05;
-}
-.blk b { letter-spacing: .3px; } .blk i { font-style: normal; font-weight: 800; opacity: .8; }
-.t-pro, .t-noun { background: #ffb347; color: #5a3200; }
-.t-can, .t-cant, .t-is, .t-want, .t-wants { background: #ff6f9c; color: #fff; }
-.t-verb { background: #5fd38d; color: #0b3d22; }
-.t-adj { background: #ffd93b; color: #5a4600; }
-.blk.ok { outline: 4px solid #1fbf5a; outline-offset: 1px; }
-.blk.soft { outline: 4px solid #8ec9ee; outline-offset: 1px; }
-.blk.bad { outline: 4px solid #ff4d4d; outline-offset: 1px; animation: shake .35s; }
-@keyframes shake { 25% { margin-left: -4px; } 75% { margin-left: 4px; } }
-#hero { z-index: 5; display: flex; align-items: center; justify-content: center; transition: transform .12s ease-out; pointer-events: none; }
-#hero span { display: block; filter: drop-shadow(0 5px 0 rgba(0,0,0,.22)); animation: idle 1.4s ease-in-out infinite; }
-#hero.hop span { animation: hop .3s; } #hero.bump span { animation: shake .25s; }
-@keyframes idle { 50% { transform: translateY(-5%); } }
-@keyframes hop { 40% { transform: translateY(-45%) scale(1.15); } }
-
-/* side panel */
-#side { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow-y: auto; }
-.panel { background: rgba(255,255,255,.9); border-radius: 18px; padding: 10px 12px; box-shadow: 0 5px 0 rgba(35,65,90,.15); }
-.panel h3 { margin: 0 0 6px; font-size: 14px; color: #ff6f3c; letter-spacing: .5px; }
-#hcard { display: flex; align-items: center; gap: 10px; }
-#hcard .big { font-size: 40px; line-height: 1; }
-#hcard .t { font-weight: 800; font-size: 14px; } #hcard .t b { font-size: 17px; }
-#sents { display: flex; flex-direction: column; gap: 6px; min-height: 46px; }
-.sent { background: #f2fbff; border-radius: 12px; padding: 6px 8px; border: 3px solid #cfe9f7; }
-.sent.ok { border-color: #1fbf5a; background: #effcf3; }
+#cv { display: block; touch-action: none; }
+#side { display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow-y: auto; padding: 2px 4px 6px 0; }
+.panel { background: linear-gradient(var(--cream), var(--cream2)); border: 4px solid var(--woodD); border-radius: 16px; padding: 8px 10px; box-shadow: 0 4px 0 rgba(60,30,0,.35), inset 0 3px 0 rgba(255,255,255,.7); }
+.panel h3 { margin: 0 0 5px; font-size: 13px; color: #d4531c; letter-spacing: .5px; }
+#hcard { display: flex; align-items: center; gap: 8px; }
+#hcard img { height: 58px; margin: -6px 0 -4px; filter: drop-shadow(0 3px 0 rgba(0,0,0,.2)); }
+#hcard .t { font-weight: 800; font-size: 13px; } #hcard .t b { font-size: 16px; }
+#sents { display: flex; flex-direction: column; gap: 5px; min-height: 40px; }
+.sent { background: #fffdf3; border-radius: 12px; padding: 5px 7px; border: 3px solid #ecd9a8; }
+.sent.ok { border-color: #34b45f; background: #effcf1; }
 .sent .row { display: flex; gap: 4px; flex-wrap: wrap; }
-.sent .jp { font-size: 13px; font-weight: 800; margin-top: 4px; }
-.sent .note { font-size: 12px; font-weight: 800; color: #1f9d4b; } .sent:not(.ok) .note { color: #6a87a0; }
-.none { font-size: 13px; font-weight: 700; opacity: .6; }
-#msg { font-weight: 800; font-size: 14px; line-height: 1.45; min-height: 64px; }
-#msg.warn { background: #fff0f0; color: #b3261e; }
-#msg.hint { background: #fff8d6; }
+.sent .jp { font-size: 12.5px; font-weight: 800; margin-top: 3px; }
+.sent .note { font-size: 11.5px; font-weight: 800; color: #1f9d4b; } .sent:not(.ok) .note { color: #9b7a50; }
+.none { font-size: 12.5px; font-weight: 800; opacity: .6; }
+#msg { font-weight: 800; font-size: 13.5px; line-height: 1.4; min-height: 58px; display: flex; align-items: center; }
+#msg.warn { background: #ffe3de; color: #b3261e; border-color: #b3261e; }
+#msg.hint { background: #fff2a8; }
 .side-btns { display: flex; gap: 8px; flex-wrap: wrap; }
-.mini-legend { display: flex; gap: 5px; flex-wrap: wrap; }
-.mini-legend .chip { min-width: 0; font-size: 11px; padding: 2px 7px; }
-#dpad { display: none; position: absolute; right: 10px; bottom: 10px; width: 150px; height: 150px; z-index: 20; }
-#dpad button { position: absolute; width: 50px; height: 50px; border-radius: 14px; border: 0; background: rgba(255,255,255,.88); font-size: 24px; box-shadow: 0 4px 0 rgba(35,65,90,.25); color: var(--ink); }
+.mini-legend { display: flex; gap: 5px; flex-wrap: wrap; } .mini-legend .chip { min-width: 0; font-size: 11px; padding: 1px 7px; }
+.keys { margin-top: 6px; font-size: 11.5px; font-weight: 800; opacity: .75; }
+#dpad { display: none; position: absolute; right: 12px; bottom: 12px; width: 156px; height: 156px; z-index: 20; }
+#dpad button { position: absolute; width: 52px; height: 52px; background-size: 100% 100%; filter: drop-shadow(0 3px 0 rgba(0,0,0,.35)); opacity: .92; }
+@media (min-width: 1200px) { .grid { grid-template-columns: repeat(8, 1fr); } }
 @media (pointer: coarse) { #dpad { display: block; } }
-@media (max-width: 860px) {
-  #stage { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
-  #side { flex-direction: row; flex-wrap: wrap; max-height: 36vh; } #side .panel { flex: 1 1 240px; }
-}
+@media (max-width: 860px) { #stage { grid-template-columns: 1fr; grid-template-rows: 1fr auto; } #side { flex-direction: row; flex-wrap: wrap; max-height: 34vh; } #side .panel { flex: 1 1 240px; } }
 
-/* overlays */
-#win { position: absolute; inset: 0; background: rgba(35,65,90,.55); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 12px; }
-#winbox { background: #fff; border-radius: 28px; padding: 22px 26px; max-width: 460px; width: 100%; text-align: center; box-shadow: 0 10px 0 rgba(0,0,0,.2); animation: pop .35s; }
-@keyframes pop { from { transform: scale(.6); opacity: 0; } }
-#winbox h2 { margin: 0; font-size: 36px; color: #ff6f3c; } #winbox .stars { font-size: 40px; margin: 4px 0; }
-#winbox .sent { text-align: left; margin: 6px 0; } #winbox .stat { font-weight: 800; margin: 6px 0 12px; }
+/* win overlay */
+#win { position: absolute; inset: 0; background: rgba(60,30,0,.45); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 12px; }
+#winbox { position: relative; background: linear-gradient(var(--cream), var(--cream2)); border: 6px solid var(--woodD); border-radius: 26px; padding: 18px 26px 16px; max-width: 470px; width: 100%; text-align: center;
+  box-shadow: 0 10px 0 rgba(0,0,0,.3), inset 0 4px 0 rgba(255,255,255,.7); animation: pop .4s cubic-bezier(.3,1.6,.5,1); }
+@keyframes pop { from { transform: scale(.5); opacity: 0; } }
+#winbox h2 { margin: 0; font-size: 38px; color: #fff; -webkit-text-stroke: 7px var(--woodD); paint-order: stroke fill; text-shadow: 0 4px 0 var(--woodD); }
+#winbox .hero { height: 104px; margin: -2px 0 -6px; animation: cheer .6s ease-in-out infinite; filter: drop-shadow(0 4px 0 rgba(0,0,0,.2)); }
+@keyframes cheer { 50% { transform: translateY(-12px) rotate(3deg); } }
+#winbox .stars { display: flex; justify-content: center; gap: 6px; margin: 4px 0 2px; } #winbox .stars img { height: 46px; animation: starin .5s both; filter: drop-shadow(0 3px 0 rgba(0,0,0,.25)); }
+#winbox .stars img:nth-child(2) { animation-delay: .15s; } #winbox .stars img:nth-child(3) { animation-delay: .3s; }
+@keyframes starin { from { transform: scale(0) rotate(-90deg); } }
+#winbox .sent { text-align: left; margin: 5px 0; } #winbox .stat { font-weight: 900; margin: 4px 0 10px; }
 #winbox .btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-.confetti { position: fixed; top: -40px; font-size: 28px; z-index: 60; pointer-events: none; animation: fall linear forwards; }
-@keyframes fall { to { transform: translateY(110vh) rotate(540deg); } }
-body.nojp .blk i { display: none; }
+body.nojp .jpx { display: none; }
 </style>
 </head>
 <body>
+<canvas id="bg"></canvas>
 
 <div id="menu">
-  <h1>Word Push!</h1>
+  <div id="logo"></div>
   <p class="sub">ことばブロックを おして、ぶんを つくろう!</p>
   <div class="legend">
-    <span><b class="chip t-noun">DOG</b> なまえ</span>
-    <span><b class="chip t-can">CAN</b> つなぐ</span>
-    <span><b class="chip t-verb">SWIM</b> うごき</span>
-    <span><b class="chip t-adj">OPEN</b> ようす</span>
+    <span><b class="chip t-noun">DOG</b> なまえ</span><span><b class="chip t-can">CAN</b> つなぐ</span>
+    <span><b class="chip t-verb">SWIM</b> うごき</span><span><b class="chip t-adj">OPEN</b> ようす</span>
   </div>
   <div class="grid" id="levelGrid"></div>
   <p class="foot">プロトタイプ ・ NEW HORIZON Elementary 5・6 (2024) の たんごで あそぶよ</p>
@@ -143,49 +125,43 @@ body.nojp .blk i { display: none; }
 
 <div id="game" class="hidden">
   <div id="top">
-    <button class="btn blue" id="bMenu">☰ メニュー</button>
-    <div class="title" id="ttl"></div>
-    <button class="btn" id="bHint">💡 ヒント</button>
-    <button class="btn green" id="bUndo">↶ もどす</button>
-    <button class="btn pink" id="bReset">⟲ やりなおし</button>
+    <button class="sbtn blue" id="bMenu">メニュー</button>
+    <div class="title stroke" id="ttl"></div>
+    <button class="sbtn yellow" id="bHint">ヒント</button>
+    <button class="sbtn green" id="bUndo">もどす</button>
+    <button class="sbtn red" id="bReset">やりなおし</button>
   </div>
   <div id="stage">
-    <div id="boardWrap"><div id="board"></div></div>
+    <div id="boardWrap"><canvas id="cv"></canvas></div>
     <div id="side">
-      <div class="panel"><div id="hcard"><div class="big" id="hEmoji"></div><div class="t" id="hText"></div></div></div>
+      <div class="panel"><div id="hcard"><img id="hImg" alt=""><div class="t" id="hText"></div></div></div>
       <div class="panel"><h3>いま の ぶん</h3><div id="sents"></div></div>
       <div class="panel" id="msg"></div>
       <div class="panel">
-        <div class="mini-legend">
-          <b class="chip t-noun">なまえ</b><b class="chip t-can">つなぐ</b><b class="chip t-verb">うごき</b><b class="chip t-adj">ようす</b>
-        </div>
+        <div class="mini-legend"><b class="chip t-noun">なまえ</b><b class="chip t-can">つなぐ</b><b class="chip t-verb">うごき</b><b class="chip t-adj">ようす</b></div>
         <div class="side-btns" style="margin-top:8px">
-          <button class="btn" id="bJp" style="font-size:13px;padding:6px 10px">🇯🇵 にほんご</button>
-          <button class="btn" id="bSnd" style="font-size:13px;padding:6px 10px">🔇 おと</button>
+          <button class="sbtn sm blue" id="bJp">にほんご</button><button class="sbtn sm green" id="bSnd">おと OFF</button>
         </div>
-        <div style="margin-top:6px;font-size:12px;font-weight:700;opacity:.7">うごく: ↑↓←→ / WASD　もどす: Z　やりなおし: R</div>
+        <div class="keys">うごく: ↑↓←→ / WASD　もどす: Z　やりなおし: R</div>
       </div>
     </div>
   </div>
-  <div id="dpad">
-    <button style="left:50px;top:0" data-d="U">▲</button><button style="left:0;top:50px" data-d="L">◀</button>
-    <button style="left:100px;top:50px" data-d="R">▶</button><button style="left:50px;top:100px" data-d="D">▼</button>
-  </div>
+  <div id="dpad"><button style="left:52px;top:0" data-d="U" id="dU"></button><button style="left:0;top:52px" data-d="L" id="dL"></button>
+    <button style="left:104px;top:52px" data-d="R" id="dR"></button><button style="left:52px;top:104px" data-d="D" id="dD"></button></div>
 </div>
-
 <div id="win" class="hidden"><div id="winbox"></div></div>
 
 <script>
 /*ENGINE*/
 /*LEVELS*/
 const PAR = /*PAR*/[];
+const ATLAS = /*ATLAS*/{};
 (function () {
   'use strict';
   const $ = s => document.querySelector(s);
   const PARSED = LEVELS.map(WP.parseLevel);
-  const ITEM_EMOJI = { a: '🍎', k: '🍰', z: '🍕', b: '🍌', r: '🍓' };
-  const TERRAIN = { R: ['river', '🌊'], M: ['mountain', '⛰️'], W: ['wall', '🧱'], D: ['door', '🚪'] };
   const DIRS = { U: [0, -1], D: [0, 1], L: [-1, 0], R: [1, 0] };
+  const HERO_KEY = { '🧒': 'I', '👦': 'BOY', '👧': 'GIRL', '🐶': 'DOG', '🐱': 'CAT', '🐵': 'MONKEY' };
   const MSG = {
     order: 'じゅんばんが ちがうよ。えいごは「だれが → どうなの」の じゅんばん!',
     beIs: 'I / we / you の あとに IS は つかえないよ。',
@@ -193,142 +169,111 @@ const PAR = /*PAR*/[];
     wantsI: 'I / we / you の ときは WANTS じゃなくて WANT だよ。',
     nosense: 'その ならびは ぶんに ならないよ。'
   };
+  const FONT = '"Arial Rounded MT Bold","Hiragino Maru Gothic ProN","M PLUS Rounded 1c","Noto Sans JP","Meiryo","Trebuchet MS",system-ui,sans-serif';
+  const BLK = { pro: 'noun', noun: 'noun', can: 'gram', cant: 'gram', is: 'gram', want: 'gram', wants: 'gram', verb: 'verb', adj: 'adj' };
+  const BLKC = { noun: '#f59a2e', gram: '#e9b81c', verb: '#ee6f8c', adj: '#4fc27a' };
 
-  let idx = 0, L, st, hist, moves, locked, soundOn = false, hintOn = false;
-  let T = 64, tileEls = [], blockEls = [], heroEl = null, terrainEls = [], itemEls = [];
+  // ---------- images ----------
+  const IMG = {};
+  const loaded = Promise.all(Object.keys(ATLAS).filter(k => k[0] !== '_').map(k => new Promise(res => {
+    const im = new Image(); im.onload = im.onerror = res; im.src = ATLAS[k]; IMG[k] = im;
+  })));
+  const src = k => ATLAS[k];
+
+  let idx = 0, L, st, hist, moves, locked, soundOn = false, hintOn = false, T = 64, FW = 14, R = null, prevOk = '', prevRules = null;
   let cleared = new Set();
   try { cleared = new Set(JSON.parse(localStorage.getItem('wordpush_cleared') || '[]')); } catch (e) {}
   try { if (localStorage.getItem('wordpush_nojp') === '1') document.body.classList.add('nojp'); } catch (e) {}
-
-  function save() { try { localStorage.setItem('wordpush_cleared', JSON.stringify([...cleared])); } catch (e) {} }
+  const save = () => { try { localStorage.setItem('wordpush_cleared', JSON.stringify([...cleared])); } catch (e) {} };
   const chipHTML = w => '<b class="chip t-' + WP.WORDS[w].t + '">' + w + '</b>';
+  const heroKey = lv => HERO_KEY[lv.hero.emoji] || 'I';
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const hash = (x, y, n) => { let h = (x * 374761393 + y * 668265263 + n * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+
+  // skin DOM buttons
+  function skin() {
+    [['bMenu', 'btn_blue'], ['bHint', 'btn_yellow'], ['bUndo', 'btn_green'], ['bReset', 'btn_red'], ['bJp', 'btn_blue'], ['bSnd', 'btn_green']]
+      .forEach(([id, k]) => { $('#' + id).style.backgroundImage = 'url(' + src(k) + ')'; });
+    [['dU', 'arr_u'], ['dL', 'arr_l'], ['dR', 'arr_r'], ['dD', 'arr_d']].forEach(([id, k]) => { $('#' + id).style.backgroundImage = 'url(' + src(k) + ')'; });
+    const lg = $('#logo'); lg.innerHTML = '';
+    const cols = ['#ff7a3c', '#ffc933', '#57c878', '#4cb8ff', '#ff7aa2'];
+    'Word Push!'.split('').forEach((c, i) => {
+      const s = document.createElement('span'); s.textContent = c; if (c === ' ') s.className = 'sp';
+      s.style.color = cols[i % cols.length]; s.style.animationDelay = (i * 0.12) + 's'; lg.appendChild(s);
+    });
+  }
 
   // ---------- menu ----------
   function buildMenu() {
     const g = $('#levelGrid'); g.innerHTML = '';
     PARSED.forEach((lv, i) => {
       const b = document.createElement('button'); b.className = 'card';
-      b.innerHTML = '<span class="n">' + lv.id + '</span>' + (cleared.has(lv.id) ? '<span class="done">⭐</span>' : '') +
-        '<div class="ti">' + lv.title + '</div><span class="gp">' + lv.gp + '</span>';
+      b.innerHTML = '<span class="n">' + lv.id + '</span><img class="h" src="' + src(heroKey(lv) + '_idle') + '">' +
+        '<div class="ti">' + lv.title + '</div><span class="gp">' + lv.gp + '</span>' +
+        (cleared.has(lv.id) ? '<img class="done" src="' + src('star_on') + '">' : '');
       b.onclick = () => startLevel(i);
       g.appendChild(b);
     });
   }
   function showMenu() {
-    buildMenu(); $('#game').classList.add('hidden'); $('#win').classList.add('hidden'); $('#menu').classList.remove('hidden');
+    buildMenu(); $('#game').classList.add('hidden'); $('#win').classList.add('hidden'); $('#menu').classList.remove('hidden'); L = null;
     try { history.replaceState(null, '', location.pathname); } catch (e) {}
   }
 
   // ---------- level ----------
+  let E = null; // entities for animation
   function startLevel(i) {
-    idx = i; L = PARSED[i]; st = L.st0; hist = []; moves = 0; locked = false; hintOn = false;
+    idx = i; L = PARSED[i]; st = L.st0; hist = []; moves = 0; locked = false; hintOn = false; won = false;
     $('#menu').classList.add('hidden'); $('#win').classList.add('hidden'); $('#game').classList.remove('hidden');
     try { history.replaceState(null, '', '#level=' + L.id); } catch (e) {}
     $('#ttl').innerHTML = 'Level ' + L.id + '：' + L.title + '<small>' + L.gp + '</small>';
-    $('#hEmoji').textContent = L.hero.emoji;
+    $('#hImg').src = src(heroKey(L) + '_idle');
     $('#hText').innerHTML = 'あなたは <b>' + L.hero.jp + '</b><br>' + (L.goal || '⭐ に さわろう!');
-    buildBoard();
-    const bd = $('#board'); bd.classList.add('instant'); layout(); refresh(); void bd.offsetWidth;
-    requestAnimationFrame(() => requestAnimationFrame(() => bd.classList.remove('instant')));
-  }
-
-  function buildBoard() {
-    const b = $('#board'); b.innerHTML = '';
-    tileEls = []; terrainEls = []; itemEls = []; blockEls = [];
-    for (let y = 0; y < L.h; y++) {
-      const row = [];
-      for (let x = 0; x < L.w; x++) {
-        const ch = L.tiles[y][x];
-        const el = document.createElement('div'); el.className = 'tile';
-        if (ch === '#') { el.classList.add('bush'); el.innerHTML = '<span class="em">🌳</span>'; }
-        else {
-          el.classList.add('floor', (x + y) % 2 ? 'a' : 'b');
-          if (TERRAIN[ch]) { el.classList.add('terrain', TERRAIN[ch][0]); el.innerHTML = '<span class="em">' + TERRAIN[ch][1] + '</span>'; terrainEls.push({ el, ch, x, y }); }
-          else if (ch === 'S') { el.classList.add('goal'); el.innerHTML = '<span class="em">⭐</span>'; }
-          else if (ITEM_EMOJI[ch]) { el.classList.add('goal'); el.innerHTML = '<span class="em">' + ITEM_EMOJI[ch] + '</span>'; itemEls.push({ el, word: WP.ITEM_CHARS[ch] }); }
-        }
-        b.appendChild(el); row.push(el);
-      }
-      tileEls.push(row);
-    }
-    L.words.forEach(w => {
-      const d = WP.WORDS[w]; const el = document.createElement('div');
-      el.className = 'blk t-' + d.t; el.innerHTML = '<b>' + w + '</b><i>' + d.jp + '</i>';
-      b.appendChild(el); blockEls.push(el);
-    });
-    heroEl = document.createElement('div'); heroEl.id = 'hero'; heroEl.innerHTML = '<span>' + L.hero.emoji + '</span>';
-    b.appendChild(heroEl);
+    parts.length = 0;
+    E = { blocks: L.words.map((w, k) => ({ x: st.p[2 * k], y: st.p[2 * k + 1], sq: 0, shake: 0 })), hero: { x: st.hx, y: st.hy, hop: 0, bump: 0, bdx: 0, face: 1, cheer: 0, t0: 0 } };
+    prevOk = ''; prevRules = null;
+    layout(); refresh(true);
   }
 
   function layout() {
     if (!L) return;
-    const wrap = $('#boardWrap');
-    const aw = wrap.clientWidth - 24, ah = wrap.clientHeight - 24;
-    T = Math.max(28, Math.min(86, Math.floor(Math.min(aw / L.w, ah / L.h))));
-    document.documentElement.style.setProperty('--t', T + 'px');
-    const b = $('#board'); b.style.width = T * L.w + 'px'; b.style.height = T * L.h + 'px';
-    for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) {
-      const el = tileEls[y][x];
-      el.style.cssText = 'width:' + T + 'px;height:' + T + 'px;left:' + x * T + 'px;top:' + y * T + 'px;font-size:' + T * 0.7 + 'px';
-    }
-    blockEls.forEach((el, i) => {
-      const w = L.words[i], n = w.length;
-      el.style.width = el.style.height = (T - 6) + 'px';
-      el.style.fontSize = (n <= 4 ? T * 0.3 : n <= 6 ? T * 0.25 : n <= 7 ? T * 0.2 : T * 0.165) + 'px';
-      el.querySelector('i').style.fontSize = Math.max(8, T * 0.15) + 'px';
-    });
-    heroEl.style.width = heroEl.style.height = T + 'px'; heroEl.style.fontSize = T * 0.78 + 'px';
-    position();
-  }
-
-  function position() {
-    blockEls.forEach((el, i) => { el.style.transform = 'translate(' + (st.p[2 * i] * T + 3) + 'px,' + (st.p[2 * i + 1] * T + 3) + 'px)'; });
-    heroEl.style.transform = 'translate(' + st.hx * T + 'px,' + st.hy * T + 'px)';
+    const wrap = $('#boardWrap'); const aw = wrap.clientWidth - 6, ah = wrap.clientHeight - 6;
+    FW = 14;
+    T = Math.max(28, Math.min(84, Math.floor(Math.min((aw - 2 * FW) / L.w, (ah - 2 * FW) / L.h))));
+    const cv = $('#cv'), dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = T * L.w + 2 * FW, h = T * L.h + 2 * FW;
+    cv.style.width = w + 'px'; cv.style.height = h + 'px'; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    cv.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
   // ---------- rules → screen ----------
-  function refresh() {
-    const R = WP.rulesOf(L, st);
+  function refresh(quiet) {
+    const Rr = WP.rulesOf(L, st); R = Rr;
     const okIds = new Set(), softIds = new Set(), badIds = new Set();
-    R.sentences.forEach(s => s.ids.forEach(id => (s.effect ? okIds : softIds).add(id)));
-    R.bad.forEach(b => b.ids.forEach(id => badIds.add(id)));
-    blockEls.forEach((el, i) => {
-      el.classList.toggle('ok', okIds.has(i));
-      el.classList.toggle('soft', !okIds.has(i) && softIds.has(i));
-      el.classList.toggle('bad', moves > 0 && badIds.has(i) && !okIds.has(i) && !softIds.has(i));
-    });
-    const fly = R.abil.has('FLY');
-    terrainEls.forEach(t => {
-      let pass = false, can = false;
-      if (t.ch === 'D') pass = R.door;
-      else if (t.ch === 'R') { pass = R.river; can = R.river || fly || R.abil.has('SWIM'); }
-      else if (t.ch === 'M') { pass = R.mountain; can = R.mountain || fly || R.abil.has('CLIMB'); }
-      else if (t.ch === 'W') { pass = R.wall; can = R.wall || fly || R.abil.has('JUMP'); }
-      if (t.ch === 'D') can = pass;
-      t.el.classList.toggle('pass', pass);
-      t.el.classList.toggle('can', can && !pass);
-      t.el.classList.toggle('frozen', t.ch === 'R' && R.river);
-      t.el.querySelector('.em').textContent = (t.ch === 'R' && R.river) ? '🧊' : TERRAIN[t.ch][1];
-    });
-    itemEls.forEach(it => it.el.classList.toggle('wanted', R.wants.has(it.word)));
+    Rr.sentences.forEach(s => s.ids.forEach(id => (s.effect ? okIds : softIds).add(id)));
+    Rr.bad.forEach(b => b.ids.forEach(id => badIds.add(id)));
+    E.status = L.words.map((_, i) => okIds.has(i) ? 'ok' : softIds.has(i) ? 'soft' : (moves > 0 && badIds.has(i)) ? 'bad' : '');
+    const okKey = [...okIds].sort().join(',');
+    E.fly = Rr.abil.has('FLY');
+    if (!quiet && prevRules) {
+      okIds.forEach(id => { if (!prevOk.split(',').includes(String(id))) for (let k = 0; k < 7; k++) spark(st.p[2 * id] + .5, st.p[2 * id + 1] + .5, '#fff27a'); });
+      if (Rr.door && !prevRules.door) L.tiles.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'D') poof(x + .5, y + .5); }));
+      if (Rr.river && !prevRules.river) L.tiles.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'R') for (let k = 0; k < 5; k++) spark(x + .5, y + .5, '#e4f7ff'); }));
+      if (Rr.mountain && !prevRules.mountain) L.tiles.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'M') poof(x + .5, y + .5); }));
+      if (Rr.wall && !prevRules.wall) L.tiles.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'W') poof(x + .5, y + .5); }));
+    }
+    prevOk = okKey; prevRules = { door: Rr.door, river: Rr.river, mountain: Rr.mountain, wall: Rr.wall };
 
-    // sentence panel
     const box = $('#sents');
-    if (!R.sentences.length) box.innerHTML = '<div class="none">ブロックを ならべて ぶんを つくろう</div>';
-    else box.innerHTML = R.sentences.map(s => {
-      const words = s.text.split(' ');
-      let note;
-      if (s.effect) note = '✓ はたらいている!';
-      else if (s.kind === 'is') note = '○ ぶんは OK。でも なにも おこらない';
-      else note = '○ ぶんは OK。でも あなたの ことじゃないよ';
-      return '<div class="sent ' + (s.effect ? 'ok' : '') + '"><div class="row">' + words.map(chipHTML).join('') + '</div>' +
+    if (!Rr.sentences.length) box.innerHTML = '<div class="none">ブロックを ならべて ぶんを つくろう</div>';
+    else box.innerHTML = Rr.sentences.map(s => {
+      const note = s.effect ? '✓ はたらいている!' : s.kind === 'is' ? '○ ぶんは OK。でも なにも おこらない' : '○ ぶんは OK。でも あなたの ことじゃないよ';
+      return '<div class="sent ' + (s.effect ? 'ok' : '') + '"><div class="row">' + s.text.split(' ').map(chipHTML).join('') + '</div>' +
         '<div class="jp">' + WP.sentenceJP(s) + '</div><div class="note">' + note + '</div></div>';
     }).join('');
-
-    // message line
     const m = $('#msg'); m.className = 'panel';
-    if (R.conflicts.length) { m.classList.add('warn'); m.textContent = '⚠ はんたいの ことばが ぶつかって いるよ! (' + R.conflicts.join(', ') + ')'; }
-    else if (R.bad.length && moves > 0) { m.classList.add('warn'); m.textContent = '✗ ' + R.bad[0].text + '：' + MSG[R.bad[0].code]; }
+    if (Rr.conflicts.length) { m.classList.add('warn'); m.textContent = '⚠ はんたいの ことばが ぶつかって いるよ! (' + Rr.conflicts.join(', ') + ')'; }
+    else if (Rr.bad.length && moves > 0) { m.classList.add('warn'); m.textContent = '✗ ' + Rr.bad[0].text + '：' + MSG[Rr.bad[0].code]; }
     else if (hintOn) { m.classList.add('hint'); m.textContent = '💡 ' + L.hint; }
     else m.textContent = L.tip;
   }
@@ -336,59 +281,260 @@ const PAR = /*PAR*/[];
   // ---------- input ----------
   function go(dir) {
     if (locked || !L) return;
-    const [dx, dy] = DIRS[dir]; const info = {};
+    const [dx, dy] = DIRS[dir]; const info = {}; const h = E.hero;
+    if (dx) h.face = dx;
     const ns = WP.move(L, st, dx, dy, info);
-    if (!ns) { heroEl.classList.remove('bump'); void heroEl.offsetWidth; heroEl.classList.add('bump'); sfx('bump'); return; }
-    hist.push(st); st = ns; moves++;
-    position();
-    if (info.hop) { heroEl.classList.add('hop'); setTimeout(() => heroEl.classList.remove('hop'), 320); }
+    if (!ns) { h.bump = .35; h.bdx = dx; h.bdy = dy; sfx('bump'); return; }
+    hist.push(st); const old = st; st = ns; moves++;
+    h.hop = .26; h.hopBig = !!info.hop;
     sfx(info.pushed ? 'push' : 'step');
+    if (info.pushed) {
+      L.words.forEach((_, k) => { if (st.p[2 * k] !== old.p[2 * k] || st.p[2 * k + 1] !== old.p[2 * k + 1]) { E.blocks[k].sq = .25; dust(st.p[2 * k] + .5 - dx * .4, st.p[2 * k + 1] + .5 - dy * .4); } });
+    }
+    const t = L.tiles[st.hy][st.hx];
+    if (t === 'R' && !(R && R.river)) { for (let k = 0; k < 8; k++) splash(st.hx + .5, st.hy + .5); }
     refresh();
     if (WP.isWin(L, st)) win();
   }
-  function undo() { if (locked || !hist.length) return; st = hist.pop(); moves = Math.max(0, moves - 1); position(); refresh(); sfx('step'); }
-  function restart() { if (!L) return; st = L.st0; hist = []; moves = 0; locked = false; hintOn = false; position(); refresh(); }
+  function undo() { if (locked || !hist.length) return; st = hist.pop(); moves = Math.max(0, moves - 1); refresh(true); sfx('step'); }
+  function restart() { if (!L) return; st = L.st0; hist = []; moves = 0; locked = false; hintOn = false; won = false; $('#win').classList.add('hidden'); E.hero.cheer = 0; E.hero.x = st.hx; E.hero.y = st.hy; refresh(true); }
 
+  let won = false;
   function win() {
-    locked = true; cleared.add(L.id); save(); sfx('win');
+    locked = true; won = true; cleared.add(L.id); save(); sfx('win'); E.hero.cheer = 1;
+    for (let k = 0; k < 40; k++) confettiP(st.hx + .5, st.hy + .3);
     const par = PAR[idx] || moves;
     const stars = moves <= par * 1.4 ? 3 : moves <= par * 2.5 ? 2 : 1;
-    const R = WP.rulesOf(L, st);
-    const sents = R.sentences.filter(s => s.effect).map(s =>
+    const Rr = WP.rulesOf(L, st);
+    const sents = Rr.sentences.filter(s => s.effect).map(s =>
       '<div class="sent ok"><div class="row">' + s.text.split(' ').map(chipHTML).join('') + '</div><div class="jp">' + WP.sentenceJP(s) + '</div></div>').join('');
     const last = idx >= PARSED.length - 1;
     setTimeout(() => {
-      $('#winbox').innerHTML = '<h2>できた! 🎉</h2><div class="stars">' + '⭐'.repeat(stars) + '☆'.repeat(3 - stars) + '</div>' +
+      if (!won) return;
+      $('#winbox').innerHTML = '<h2>できた!</h2><img class="hero" src="' + src(heroKey(L) + '_cheer') + '">' +
+        '<div class="stars">' + [0, 1, 2].map(i => '<img src="' + src(i < stars ? 'star_on' : 'star_off') + '">').join('') + '</div>' +
         '<div class="stat">' + moves + ' て (ベスト ' + par + ' て)</div>' + sents +
-        '<div class="btns"><button class="btn" id="wMenu">☰ メニュー</button><button class="btn pink" id="wAgain">⟲ もういちど</button>' +
-        (last ? '' : '<button class="btn green" id="wNext">つぎへ ▶</button>') + '</div>';
+        '<div class="btns"><button class="sbtn blue" id="wMenu">メニュー</button><button class="sbtn red" id="wAgain">もういちど</button>' +
+        (last ? '' : '<button class="sbtn green" id="wNext">つぎへ ▶</button>') + '</div>';
+      ['wMenu', 'blue', 'wAgain', 'red', 'wNext', 'green'].forEach((v, i, a) => { });
+      [['wMenu', 'btn_blue'], ['wAgain', 'btn_red'], ['wNext', 'btn_green']].forEach(([id, k]) => { const e = $('#' + id); if (e) e.style.backgroundImage = 'url(' + src(k) + ')'; });
       $('#win').classList.remove('hidden');
-      $('#wMenu').onclick = showMenu; $('#wAgain').onclick = () => { $('#win').classList.add('hidden'); restart(); };
+      $('#wMenu').onclick = showMenu; $('#wAgain').onclick = restart;
       if (!last) $('#wNext').onclick = () => startLevel(idx + 1);
-      confetti();
-    }, 500);
-  }
-  function confetti() {
-    const em = ['⭐', '🎉', '✨', '🎈', '🍎'];
-    for (let i = 0; i < 28; i++) {
-      const s = document.createElement('div'); s.className = 'confetti'; s.textContent = em[i % em.length];
-      s.style.left = Math.random() * 100 + 'vw'; s.style.animationDuration = 1.6 + Math.random() * 1.8 + 's'; s.style.animationDelay = Math.random() * .5 + 's';
-      document.body.appendChild(s); setTimeout(() => s.remove(), 4500);
-    }
+    }, 900);
   }
 
-  // tiny sound effects (off by default; no voice)
+  // ---------- particles ----------
+  const parts = [];
+  function P(o) { parts.push(Object.assign({ x: 0, y: 0, vx: 0, vy: 0, g: 0, life: .6, max: .6, size: 6, kind: 'dot', color: '#fff', rot: 0, vr: 0 }, o)); }
+  function dust(x, y) { for (let i = 0; i < 4; i++) P({ x, y: y + .25, vx: rnd(-.8, .8), vy: rnd(-.8, -.1), life: rnd(.3, .5), max: .5, size: rnd(.04, .08), color: 'rgba(255,255,255,.8)', kind: 'puff' }); }
+  function splash(x, y) { P({ x: x + rnd(-.2, .2), y: y + .1, vx: rnd(-1.2, 1.2), vy: rnd(-3.4, -1.6), g: 9, life: rnd(.45, .7), max: .7, size: rnd(.06, .11), color: '#bff1ff', kind: 'drop' }); }
+  function spark(x, y, c) { P({ x: x + rnd(-.45, .45), y: y + rnd(-.45, .45), vx: rnd(-.6, .6), vy: rnd(-1.2, -.2), life: rnd(.5, .9), max: .9, size: rnd(.1, .22), color: c || '#fff27a', kind: 'spark', vr: rnd(-4, 4) }); }
+  function poof(x, y) { for (let i = 0; i < 9; i++) { const a = Math.PI * 2 * i / 9; P({ x, y, vx: Math.cos(a) * rnd(.8, 1.6), vy: Math.sin(a) * rnd(.8, 1.6), life: rnd(.4, .6), max: .6, size: rnd(.07, .13), color: 'rgba(255,255,255,.9)', kind: 'puff' }); } for (let k = 0; k < 6; k++) spark(x, y); }
+  function confettiP(x, y) { P({ x, y, vx: rnd(-4, 4), vy: rnd(-7, -2), g: 9, life: rnd(1.4, 2.4), max: 2.4, size: rnd(.14, .24), color: ['#ff7a3c', '#ffc933', '#57c878', '#4cb8ff', '#ff7aa2'][Math.random() * 5 | 0], kind: Math.random() < .35 ? 'star' : 'conf', rot: rnd(0, 6), vr: rnd(-8, 8) }); }
+
+  // ---------- drawing ----------
+  const cv = $('#cv'), ctx = cv.getContext('2d');
+  function drawImg(k, cx, by, w, alpha) { // centered on cx, bottom at by, width w
+    const im = IMG[k]; if (!im || !im.naturalWidth) return;
+    const h = w * im.naturalHeight / im.naturalWidth; if (alpha != null) ctx.globalAlpha = alpha;
+    ctx.drawImage(im, cx - w / 2, by - h, w, h); ctx.globalAlpha = 1; return h;
+  }
+  function drawTile(k, x, y, s, alpha) { const im = IMG[k]; if (!im || !im.naturalWidth) return; if (alpha != null) ctx.globalAlpha = alpha; ctx.drawImage(im, x, y, s, s); ctx.globalAlpha = 1; }
+  function shadow(cx, cy, rx, a) { ctx.fillStyle = 'rgba(40,20,0,' + (a || .25) + ')'; ctx.beginPath(); ctx.ellipse(cx, cy, rx, rx * .32, 0, 0, 7); ctx.fill(); }
+  function nine(k, x, y, w, h, b, sb) {
+    const im = IMG[k]; if (!im || !im.naturalWidth) return; const W = im.naturalWidth, H = im.naturalHeight;
+    const s = (sx, sy, sw, sh, dx, dy, dw, dh) => ctx.drawImage(im, sx, sy, sw, sh, dx, dy, dw, dh);
+    s(0, 0, sb, sb, x, y, b, b); s(W - sb, 0, sb, sb, x + w - b, y, b, b); s(0, H - sb, sb, sb, x, y + h - b, b, b); s(W - sb, H - sb, sb, sb, x + w - b, y + h - b, b, b);
+    s(sb, 0, W - 2 * sb, sb, x + b, y, w - 2 * b, b); s(sb, H - sb, W - 2 * sb, sb, x + b, y + h - b, w - 2 * b, b);
+    s(0, sb, sb, H - 2 * sb, x, y + b, b, h - 2 * b); s(W - sb, sb, sb, H - 2 * sb, x + w - b, y + b, b, h - 2 * b);
+  }
+
+  function fitText(txt, maxW, size, weight) { ctx.font = weight + ' ' + size + 'px ' + FONT; let w = ctx.measureText(txt).width; if (w > maxW) { size = size * maxW / w; ctx.font = weight + ' ' + size + 'px ' + FONT; } return size; }
+
+  function terrainAt(x, y) { return L.tiles[y][x]; }
+  function passInfo(ch) {
+    if (!R) return { pass: false, can: false };
+    const fly = R.abil.has('FLY');
+    if (ch === 'D') return { pass: R.door, can: false };
+    if (ch === 'R') return { pass: R.river, can: !R.river && (fly || R.abil.has('SWIM')) };
+    if (ch === 'M') return { pass: R.mountain, can: !R.mountain && (fly || R.abil.has('CLIMB')) };
+    if (ch === 'W') return { pass: R.wall, can: !R.wall && (fly || R.abil.has('JUMP')) };
+    return { pass: false, can: false };
+  }
+
+  function drawBoard(time, dt) {
+    const w = T * L.w + 2 * FW, h = T * L.h + 2 * FW;
+    ctx.clearRect(0, 0, w, h);
+    // frame backing + shadow
+    ctx.save(); ctx.shadowColor = 'rgba(50,25,0,.45)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 8; ctx.fillStyle = '#3d8f3f'; ctx.fillRect(FW - 2, FW - 2, T * L.w + 4, T * L.h + 4); ctx.restore();
+    ctx.fillStyle = '#3d8f3f'; ctx.fillRect(FW, FW, T * L.w, T * L.h);
+    ctx.save(); ctx.translate(FW, FW);
+    const S = T + 1;
+    // floor
+    for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) {
+      const ch = terrainAt(x, y);
+      if (ch === '#') continue;
+      if (ch === 'R') {
+        const pi = passInfo('R'); const ph = hash(x, y, 1);
+        if (pi.pass) { drawTile(ph < .5 ? 'ice0' : 'ice1', x * T, y * T, S); if (hash(x, y, 7) < 0.9) { const a = .5 + .5 * Math.sin(time * 3 + x + y); ctx.globalAlpha = a * .8; ctx.fillStyle = '#fff'; ctx.fillRect(x * T + T * .65, y * T + T * .2, 3, 3); ctx.globalAlpha = 1; } }
+        else {
+          const a = ['water0', 'water1', 'water2', 'water3'][(hash(x, y, 2) * 4) | 0], b = ['water0', 'water1', 'water2', 'water3'][(hash(x, y, 3) * 4) | 0];
+          drawTile(a, x * T, y * T, S); const f = .5 + .5 * Math.sin(time * 1.6 + x * .9 + y * .6); if (b !== a) drawTile(b, x * T, y * T, S, f * .75);
+          if (pi.can && !E.fly) { /* swim ring added later */ }
+        }
+        continue;
+      }
+      const r = hash(x, y, 4); const g = r < .5 ? 'grass0' : r < .75 ? 'grass1' : r < .9 ? 'grass2' : 'grass3';
+      drawTile(g, x * T, y * T, S);
+    }
+    // bushes
+    for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) if (terrainAt(x, y) === '#') drawTile('bush' + ((hash(x, y, 5) * 4) | 0), x * T - 1, y * T - 1, S + 2);
+    // ability hint rings
+    for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) {
+      const ch = terrainAt(x, y); const pi = passInfo(ch);
+      if (pi.can) { const a = .35 + .25 * Math.sin(time * 4); ctx.strokeStyle = 'rgba(255,255,140,' + a + ')'; ctx.lineWidth = 3; ctx.setLineDash([6, 5]); ctx.lineDashOffset = -time * 14; ctx.strokeRect(x * T + 4, y * T + 4, T - 8, T - 8); ctx.setLineDash([]); }
+    }
+    // static objects sorted by row, then dynamic
+    const drawList = [];
+    for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) {
+      const ch = terrainAt(x, y); const pi = passInfo(ch);
+      if (ch === 'M') drawList.push({ y: y + .5, f: () => { shadow((x + .5) * T, (y + .92) * T, T * .38, .22); drawImg(pi.pass ? 'hill' : 'mountain', (x + .5) * T, (y + .98) * T, T * 1.02); } });
+      else if (ch === 'W') drawList.push({ y: y + .5, f: () => { shadow((x + .5) * T, (y + .92) * T, T * .38, .22); drawImg(pi.pass ? 'lowwall' : 'wall', (x + .5) * T, (y + .98) * T, T * (pi.pass ? .9 : .96)); } });
+      else if (ch === 'D') drawList.push({ y: y + .5, f: () => { shadow((x + .5) * T, (y + .92) * T, T * .36, .2); drawImg(pi.pass ? 'door_open' : 'door_closed', (x + .5) * T, (y + .97) * T, T * .9); } });
+      else if (ch === 'S' || WP.ITEM_CHARS[ch]) {
+        const word = WP.ITEM_CHARS[ch]; const wanted = word && R && R.wants.has(word);
+        drawList.push({ y: y + .5, f: () => {
+          const bob = Math.sin(time * 3 + x * 1.3 + y) * T * .05; shadow((x + .5) * T, (y + .88) * T, T * .26 - bob * .15, .22);
+          const cx = (x + .5) * T, cy = (y + .5) * T + bob;
+          if (ch === 'S' || wanted) { // glow
+            const g = ctx.createRadialGradient(cx, cy, T * .1, cx, cy, T * .62); g.addColorStop(0, 'rgba(255,240,120,.85)'); g.addColorStop(1, 'rgba(255,240,120,0)');
+            ctx.fillStyle = g; ctx.fillRect(cx - T, cy - T, T * 2, T * 2);
+            ctx.save(); ctx.translate(cx, cy); ctx.rotate(time * .6); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 2; for (let k = 0; k < 8; k++) { ctx.rotate(Math.PI / 4); ctx.beginPath(); ctx.moveTo(T * .38, 0); ctx.lineTo(T * .55, 0); ctx.stroke(); } ctx.restore();
+          }
+          const k = ch === 'S' ? 'star' : { apple: 'apple', cake: 'cake', pizza: 'pizza', banana: 'banana', strawberry: 'strawberry' }[word.toLowerCase()];
+          const sc = 1 + Math.sin(time * 4 + x) * .04; drawImg(k, cx, cy + T * .42 * sc, T * .8 * sc);
+        } });
+        if ((ch === 'S' || wanted) && Math.random() < dt * 3) spark(x + .5, y + .5);
+      }
+    }
+    // dynamic: blocks + hero
+    const stBlocks = L.words.map((w, k) => ({ k, w }));
+    const hr = E.hero;
+    stBlocks.forEach(({ k, w }) => drawList.push({ y: E.blocks[k].y + .5, f: () => drawBlock(k, w, time) }));
+    drawList.push({ y: hr.y + .6, f: () => drawHero(time) });
+    drawList.sort((a, b) => a.y - b.y).forEach(o => o.f());
+    // particles
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const p = parts[i]; p.life -= dt; if (p.life <= 0) { parts.splice(i, 1); continue; }
+      p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+      const a = Math.min(1, p.life / p.max * 1.6), px = p.x * T, py = p.y * T, s = p.size * T;
+      ctx.globalAlpha = a;
+      if (p.kind === 'puff') { ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(px, py, s * (1.5 - a * .5), 0, 7); ctx.fill(); }
+      else if (p.kind === 'drop') { ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(px, py, s, 0, 7); ctx.fill(); }
+      else if (p.kind === 'spark' || p.kind === 'star') {
+        ctx.save(); ctx.translate(px, py); ctx.rotate(p.rot); ctx.fillStyle = p.color; ctx.strokeStyle = 'rgba(120,70,0,.5)'; ctx.lineWidth = 1; ctx.beginPath();
+        const r1 = s * (p.kind === 'star' ? 1.4 : 1.2), r2 = r1 * .38; for (let k = 0; k < 8; k++) { const r = k % 2 ? r2 : r1, an = k * Math.PI / 4; ctx.lineTo(Math.cos(an) * r, Math.sin(an) * r); } ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+      } else if (p.kind === 'conf') { ctx.save(); ctx.translate(px, py); ctx.rotate(p.rot); ctx.fillStyle = p.color; ctx.fillRect(-s * .6, -s * .3, s * 1.2, s * .6); ctx.restore(); }
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+    // wooden frame (9-slice)
+    nine('frame', 0, 0, w, h, FW + 6, ((IMG.frame.naturalWidth * 22 / 150) | 0));
+  }
+
+  function drawBlock(k, w, time) {
+    const b = E.blocks[k], d = WP.WORDS[w], s = E.status[k];
+    const col = BLK[d.t], x = b.x * T, y = b.y * T; let sh = 0;
+    if (s === 'bad') sh = Math.sin(time * 50) * 2.5;
+    const sq = b.sq; const sc = 1 + Math.sin(sq * 12.5) * .12;
+    const cx = x + T / 2 + sh, cy = y + T / 2;
+    ctx.save();
+    shadow(cx, y + T * .92, T * .4, .25);
+    ctx.translate(cx, cy); ctx.scale(sc, 2 - sc);
+    if (s === 'ok') { ctx.shadowColor = '#43ff7a'; ctx.shadowBlur = 16 + Math.sin(time * 6) * 4; }
+    else if (s === 'soft') { ctx.shadowColor = '#6cc6ff'; ctx.shadowBlur = 11; }
+    else if (s === 'bad') { ctx.shadowColor = '#ff3b3b'; ctx.shadowBlur = 14; }
+    const im = IMG['blk_' + col]; const bs = T - 4;
+    if (im && im.naturalWidth) { ctx.drawImage(im, -bs / 2, -bs / 2, bs, bs); if (s) ctx.drawImage(im, -bs / 2, -bs / 2, bs, bs); }
+    ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+    // word
+    const jp = !document.body.classList.contains('nojp');
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+    const sz = fitText(w, bs * .78, T * (w.length <= 3 ? .36 : .3), 900); const ty = jp ? -T * .08 : 0;
+    ctx.lineWidth = Math.max(3, sz * .24); ctx.strokeStyle = '#5a2f0d'; ctx.strokeText(w, 0, ty); ctx.fillStyle = '#fff'; ctx.fillText(w, 0, ty);
+    if (jp) { const jsz = fitText(d.jp, bs * .78, T * .17, 900); ctx.lineWidth = Math.max(2, jsz * .22); ctx.strokeStyle = '#5a2f0d'; ctx.strokeText(d.jp, 0, T * .24); ctx.fillStyle = '#fff6c9'; ctx.fillText(d.jp, 0, T * .24); }
+    ctx.restore();
+  }
+
+  function heroPose(time) {
+    const hr = E.hero, key = heroKey(L); let pose = 'idle', yoff = 0, swim = false;
+    const tx = Math.round(hr.x), ty = Math.round(hr.y); const ch = (L.tiles[ty] && L.tiles[ty][tx]) || '.';
+    const pi = passInfo(ch);
+    if (hr.cheer) pose = 'cheer';
+    else if (hr.bump > 0) pose = 'bump';
+    else if (ch === 'R' && !pi.pass) { pose = E.fly ? 'fly' : 'swim'; swim = !E.fly; }
+    else if (ch === 'M' && !pi.pass) pose = E.fly ? 'fly' : 'climb';
+    else if (ch === 'W' && !pi.pass) pose = E.fly ? 'fly' : 'hop';
+    else if (hr.hop > 0) pose = 'hop';
+    else pose = (Math.floor(time * 1.8) % 2) ? 'idle2' : 'idle';
+    return { pose, key, swim, ch };
+  }
+  function drawHero(time) {
+    const hr = E.hero, { pose, key, swim, ch } = heroPose(time);
+    let cx = (hr.x + .5) * T, by = (hr.y + .94) * T; let hop = 0, bob = 0;
+    if (hr.hop > 0) hop = Math.sin((1 - hr.hop / .26) * Math.PI) * T * (hr.hopBig ? .42 : .22);
+    if (hr.cheer) hop = Math.abs(Math.sin(time * 7)) * T * .3;
+    if (pose === 'fly') bob = Math.sin(time * 5) * T * .06 + T * .12; if (swim) bob = Math.sin(time * 4) * T * .04;
+    if (hr.bump > 0) cx += hr.bdx * Math.sin(hr.bump * 30) * T * .06;
+    shadow(cx, (hr.y + .92) * T, T * (.3 - hop / T * .2), swim ? 0 : .28);
+    ctx.save(); ctx.translate(cx, by - hop - bob);
+    const flip = hr.face < 0 ? -1 : 1; ctx.scale(flip, 1);
+    const k = key + '_' + pose; const wTarget = T * (pose === 'swim' ? 1.15 : pose === 'fly' ? 1.28 : 1.02);
+    const im = IMG[k]; if (im && im.naturalWidth) { const sc = Math.min(wTarget / im.naturalWidth, (T * 1.18) / im.naturalHeight * (pose === 'fly' || pose === 'cheer' ? 1.15 : 1)); const w2 = im.naturalWidth * sc, h2 = im.naturalHeight * sc; ctx.drawImage(im, -w2 / 2, -h2, w2, h2); }
+    ctx.restore();
+  }
+
+  // ---------- background ----------
+  const bgc = $('#bg'), bctx = bgc.getContext('2d'); let bgW = 0, bgH = 0; const clouds = Array.from({ length: 6 }, (_, i) => ({ x: Math.random(), y: .05 + Math.random() * .3, s: .6 + Math.random() * .8, v: .004 + Math.random() * .006 }));
+  function drawBg(time) {
+    const dpr = 1; const W = innerWidth, H = innerHeight;
+    if (W !== bgW || H !== bgH) { bgW = bgc.width = W; bgH = bgc.height = H; }
+    const g = bctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#5cc4ff'); g.addColorStop(.6, '#bfeaff'); g.addColorStop(1, '#e8fbff'); bctx.fillStyle = g; bctx.fillRect(0, 0, W, H);
+    // sun
+    const sg = bctx.createRadialGradient(W * .85, H * .16, 10, W * .85, H * .16, 150); sg.addColorStop(0, 'rgba(255,248,190,1)'); sg.addColorStop(.25, 'rgba(255,240,150,.8)'); sg.addColorStop(1, 'rgba(255,240,150,0)'); bctx.fillStyle = sg; bctx.fillRect(0, 0, W, H);
+    // clouds
+    clouds.forEach(c => {
+      c.x += c.v / 60; if (c.x > 1.2) c.x = -.2; const x = c.x * W, y = c.y * H, s = c.s * 60;
+      bctx.fillStyle = 'rgba(255,255,255,.92)'; bctx.beginPath(); bctx.arc(x, y, s * .6, 0, 7); bctx.arc(x + s * .6, y - s * .2, s * .7, 0, 7); bctx.arc(x + s * 1.3, y, s * .6, 0, 7); bctx.arc(x + s * .65, y + s * .2, s * .6, 0, 7); bctx.fill();
+    });
+    // hills (parallax)
+    const hill = (base, amp, freq, speed, col) => { bctx.fillStyle = col; bctx.beginPath(); bctx.moveTo(0, H); for (let x = 0; x <= W; x += 12) bctx.lineTo(x, H * base + Math.sin(x * freq + time * speed) * amp + Math.sin(x * freq * 2.3 + 1) * amp * .35); bctx.lineTo(W, H); bctx.closePath(); bctx.fill(); };
+    hill(.68, 26, .006, .03, '#8fd97a'); hill(.78, 22, .008, .05, '#6ccb5f'); hill(.88, 16, .011, .08, '#4fb84f');
+  }
+
+  // ---------- main loop ----------
+  let last = performance.now(), frame = 0;
+  function loop(now) {
+    const dt = Math.min(.05, (now - last) / 1000); last = now; const time = now / 1000; frame++;
+    if (frame % 2 === 0 || !L) drawBg(time);
+    if (L && E && !$('#game').classList.contains('hidden')) {
+      const k = 1 - Math.exp(-dt * 20);
+      E.blocks.forEach((b, i) => { b.x += (st.p[2 * i] - b.x) * k; b.y += (st.p[2 * i + 1] - b.y) * k; if (b.sq > 0) b.sq = Math.max(0, b.sq - dt); });
+      const h = E.hero; h.x += (st.hx - h.x) * k; h.y += (st.hy - h.y) * k; if (h.hop > 0) h.hop = Math.max(0, h.hop - dt); if (h.bump > 0) h.bump = Math.max(0, h.bump - dt);
+      drawBoard(time, dt);
+    }
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- sfx ----------
   let ac = null;
   function sfx(kind) {
     if (!soundOn) return;
     try {
       ac = ac || new (window.AudioContext || window.webkitAudioContext)();
-      const seq = { step: [[330, .04]], push: [[220, .06]], bump: [[120, .08]], win: [[523, .12], [659, .12], [784, .2]] }[kind];
-      let t = ac.currentTime;
-      seq.forEach(([f, d]) => {
-        const o = ac.createOscillator(), g = ac.createGain(); o.type = 'triangle'; o.frequency.value = f;
-        g.gain.setValueAtTime(.08, t); g.gain.exponentialRampToValueAtTime(.001, t + d); o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + d); t += d;
-      });
+      const seq = { step: [[330, .04]], push: [[220, .06]], bump: [[120, .08]], win: [[523, .12], [659, .12], [784, .2]] }[kind]; let t = ac.currentTime;
+      seq.forEach(([f, d]) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(.08, t); g.gain.exponentialRampToValueAtTime(.001, t + d); o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + d); t += d; });
     } catch (e) {}
   }
 
@@ -400,28 +546,27 @@ const PAR = /*PAR*/[];
     if (map[k]) { e.preventDefault(); go(map[k]); }
     else if (k === 'z' || k === 'u' || k === 'backspace') { e.preventDefault(); undo(); }
     else if (k === 'r') restart();
-    else if (k === 'h') { hintOn = !hintOn; refresh(); }
+    else if (k === 'h') { hintOn = !hintOn; refresh(true); }
     else if (k === 'escape') showMenu();
   });
   document.querySelectorAll('#dpad button').forEach(b => b.addEventListener('pointerdown', e => { e.preventDefault(); go(b.dataset.d); }));
   let tx = 0, ty = 0;
   $('#boardWrap').addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
-  $('#boardWrap').addEventListener('touchend', e => {
-    const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
-    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
-    go(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'R' : 'L') : (dy > 0 ? 'D' : 'U'));
-  }, { passive: true });
-
+  $('#boardWrap').addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty; if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return; go(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'R' : 'L') : (dy > 0 ? 'D' : 'U')); }, { passive: true });
   $('#bMenu').onclick = showMenu; $('#bUndo').onclick = undo; $('#bReset').onclick = restart;
-  $('#bHint').onclick = () => { hintOn = !hintOn; refresh(); };
+  $('#bHint').onclick = () => { hintOn = !hintOn; refresh(true); };
   $('#bJp').onclick = () => { document.body.classList.toggle('nojp'); try { localStorage.setItem('wordpush_nojp', document.body.classList.contains('nojp') ? '1' : '0'); } catch (e) {} };
-  $('#bSnd').onclick = () => { soundOn = !soundOn; $('#bSnd').textContent = soundOn ? '🔊 おと' : '🔇 おと'; sfx('step'); };
+  $('#bSnd').onclick = () => { soundOn = !soundOn; $('#bSnd').textContent = soundOn ? 'おと ON' : 'おと OFF'; sfx('step'); };
   window.addEventListener('resize', layout);
   if (window.ResizeObserver) new ResizeObserver(layout).observe($('#boardWrap'));
 
-  const m = location.hash.match(/level=(\d+)/);
-  if (m && PARSED[+m[1] - 1]) startLevel(+m[1] - 1); else showMenu();
-  window.__wp = { go, undo, restart, startLevel, get state() { return { st, moves, idx }; } }; // for testing
+  loaded.then(() => {
+    skin();
+    const m = location.hash.match(/level=(\d+)/);
+    if (m && PARSED[+m[1] - 1]) startLevel(+m[1] - 1); else showMenu();
+    requestAnimationFrame(loop);
+  });
+  window.__wp = { go, undo, restart, startLevel, get state() { return { st, moves, idx }; } };
 })();
 </script>
 </body>
