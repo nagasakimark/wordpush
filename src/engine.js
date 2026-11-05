@@ -35,11 +35,13 @@ const WP = (function () {
     CAN:  { t: 'can',  jp: 'できる' },
     IS:   { t: 'is',   jp: 'です' },
     WANT: { t: 'want', jp: 'ほしい' },
+    WANTS: { t: 'wants', jp: 'ほしい' },
+    "CAN'T": { t: 'cant', jp: 'できない' },
     // ability verbs
-    FLY:   { t: 'verb', jp: 'とぶ',     abil: 'とべる' },
-    SWIM:  { t: 'verb', jp: 'およぐ',   abil: 'およげる' },
-    JUMP:  { t: 'verb', jp: 'ジャンプ', abil: 'ジャンプできる' },
-    CLIMB: { t: 'verb', jp: 'のぼる',   abil: 'のぼれる' },
+    FLY:   { t: 'verb', jp: 'とぶ',     abil: 'とべる', neg: 'とべない' },
+    SWIM:  { t: 'verb', jp: 'およぐ',   abil: 'およげる', neg: 'およげない' },
+    JUMP:  { t: 'verb', jp: 'ジャンプ', abil: 'ジャンプできる', neg: 'ジャンプできない' },
+    CLIMB: { t: 'verb', jp: 'のぼる',   abil: 'のぼれる', neg: 'のぼれない' },
     // adjectives
     OPEN:   { t: 'adj', jp: 'あいている' },
     CLOSED: { t: 'adj', jp: 'しまっている' },
@@ -48,7 +50,7 @@ const WP = (function () {
     LOW:    { t: 'adj', jp: 'ひくい' },
     HIGH:   { t: 'adj', jp: 'たかい' },
   };
-  const GRAMMAR_WORDS = ['CAN', 'IS'];
+  const GRAMMAR_WORDS = ['CAN', "CAN'T", 'IS', 'WANTS'];
   const ITEM_CHARS = { a: 'APPLE', k: 'CAKE', z: 'PIZZA', b: 'BANANA', r: 'STRAWBERRY' };
   const OPPOSITES = { DOOR: ['OPEN', 'CLOSED'], RIVER: ['COLD', 'HOT'], MOUNTAIN: ['LOW', 'HIGH'], WALL: ['LOW', 'HIGH'] };
 
@@ -85,12 +87,15 @@ const WP = (function () {
     const A = WORDS[a], B = WORDS[b], C = WORDS[c];
     if (B.t === 'can' && (A.t === 'pro' || A.t === 'noun') && C.t === 'verb') return { ok: true, kind: 'can', subj: a, verb: c };
     if (B.t === 'is' && (A.t === 'noun' || a === 'HE' || a === 'SHE') && C.t === 'adj') return { ok: true, kind: 'is', subj: a, adj: c };
+    if (B.t === 'cant' && (A.t === 'pro' || A.t === 'noun') && C.t === 'verb') return { ok: true, kind: 'cant', subj: a, verb: c };
     if (B.t === 'want' && (a === 'I' || a === 'WE' || a === 'YOU') && C.t === 'noun') return { ok: true, kind: 'want', subj: a, obj: c };
+    if (B.t === 'wants' && (a === 'HE' || a === 'SHE' || A.t === 'noun') && C.t === 'noun') return { ok: true, kind: 'want', subj: a, obj: c };
     return { ok: false };
   }
   function sentenceJP(s) {
     const S = WORDS[s.subj].jp;
     if (s.kind === 'can') return S + 'は ' + WORDS[s.verb].abil;
+    if (s.kind === 'cant') return S + 'は ' + WORDS[s.verb].neg;
     if (s.kind === 'is') return S + 'は ' + WORDS[s.adj].jp;
     return S + 'は ' + WORDS[s.obj].jp + 'が ほしい';
   }
@@ -98,7 +103,7 @@ const WP = (function () {
   function diagnose(ws) {
     if (ws.length === 2) {
       const A = WORDS[ws[0]], B = WORDS[ws[1]];
-      if ((A.t === 'pro' || A.t === 'noun') && (B.t === 'can' || B.t === 'is' || B.t === 'want')) return null; // unfinished, fine
+      if ((A.t === 'pro' || A.t === 'noun') && (B.t === 'can' || B.t === 'cant' || B.t === 'is' || B.t === 'want' || B.t === 'wants')) return null; // unfinished, fine
     }
     for (let i = 0; i + 2 < ws.length; i++) {
       const tri = [ws[i], ws[i + 1], ws[i + 2]];
@@ -107,8 +112,8 @@ const WP = (function () {
     for (let i = 0; i + 1 < ws.length; i++) {
       const A = WORDS[ws[i]], B = WORDS[ws[i + 1]];
       if (B.t === 'is' && (ws[i] === 'I' || ws[i] === 'WE' || ws[i] === 'YOU')) return 'beIs';
-      if (B.t === 'want' && A.t !== 'pro') return 'wantNoun';
-      if (B.t === 'want' && (ws[i] === 'HE' || ws[i] === 'SHE')) return 'wantHe';
+      if (B.t === 'want' && !(ws[i] === 'I' || ws[i] === 'WE' || ws[i] === 'YOU')) return 'wantS';
+      if (B.t === 'wants' && (ws[i] === 'I' || ws[i] === 'WE' || ws[i] === 'YOU')) return 'wantsI';
     }
     return 'nosense';
   }
@@ -161,11 +166,17 @@ const WP = (function () {
   // Turns sentences into what the world does
   function resolve(L, sentences) {
     const names = L.hero.names;
-    const abil = new Set(), props = {}, wants = new Set(), conflicts = [];
+    const abil = new Set(), cant = new Set(), props = {}, wants = new Set(), conflicts = [];
     for (const s of sentences) {
       s.effect = false;
-      if (s.kind === 'can' && names.includes(s.subj)) { abil.add(s.verb); s.effect = true; }
-      else if (s.kind === 'want' && s.subj === 'I' && names.includes('I')) { wants.add(s.obj); s.effect = true; }
+      if (s.kind === 'cant' && names.includes(s.subj)) { cant.add(s.verb); s.effect = true; }
+    }
+    for (const s of sentences) {
+      if (s.kind === 'can' && names.includes(s.subj)) {
+        if (cant.has(s.verb)) { conflicts.push(s.verb + ": CAN ⇄ CAN'T"); }
+        else { abil.add(s.verb); s.effect = true; }
+      }
+      else if (s.kind === 'want' && names.includes(s.subj)) { wants.add(s.obj); s.effect = true; }
       else if (s.kind === 'is') { (props[s.subj] = props[s.subj] || new Set()).add(s.adj); }
     }
     const R = { abil, wants, conflicts, door: false, river: false, mountain: false, wall: false };

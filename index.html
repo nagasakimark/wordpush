@@ -73,7 +73,7 @@ button { font: inherit; cursor: pointer; }
 }
 .blk b { letter-spacing: .3px; } .blk i { font-style: normal; font-weight: 800; opacity: .8; }
 .t-pro, .t-noun { background: #ffb347; color: #5a3200; }
-.t-can, .t-is, .t-want { background: #ff6f9c; color: #fff; }
+.t-can, .t-cant, .t-is, .t-want, .t-wants { background: #ff6f9c; color: #fff; }
 .t-verb { background: #5fd38d; color: #0b3d22; }
 .t-adj { background: #ffd93b; color: #5a4600; }
 .blk.ok { outline: 4px solid #1fbf5a; outline-offset: 1px; }
@@ -213,11 +213,13 @@ const WP = (function () {
     CAN:  { t: 'can',  jp: 'できる' },
     IS:   { t: 'is',   jp: 'です' },
     WANT: { t: 'want', jp: 'ほしい' },
+    WANTS: { t: 'wants', jp: 'ほしい' },
+    "CAN'T": { t: 'cant', jp: 'できない' },
     // ability verbs
-    FLY:   { t: 'verb', jp: 'とぶ',     abil: 'とべる' },
-    SWIM:  { t: 'verb', jp: 'およぐ',   abil: 'およげる' },
-    JUMP:  { t: 'verb', jp: 'ジャンプ', abil: 'ジャンプできる' },
-    CLIMB: { t: 'verb', jp: 'のぼる',   abil: 'のぼれる' },
+    FLY:   { t: 'verb', jp: 'とぶ',     abil: 'とべる', neg: 'とべない' },
+    SWIM:  { t: 'verb', jp: 'およぐ',   abil: 'およげる', neg: 'およげない' },
+    JUMP:  { t: 'verb', jp: 'ジャンプ', abil: 'ジャンプできる', neg: 'ジャンプできない' },
+    CLIMB: { t: 'verb', jp: 'のぼる',   abil: 'のぼれる', neg: 'のぼれない' },
     // adjectives
     OPEN:   { t: 'adj', jp: 'あいている' },
     CLOSED: { t: 'adj', jp: 'しまっている' },
@@ -226,7 +228,7 @@ const WP = (function () {
     LOW:    { t: 'adj', jp: 'ひくい' },
     HIGH:   { t: 'adj', jp: 'たかい' },
   };
-  const GRAMMAR_WORDS = ['CAN', 'IS'];
+  const GRAMMAR_WORDS = ['CAN', "CAN'T", 'IS', 'WANTS'];
   const ITEM_CHARS = { a: 'APPLE', k: 'CAKE', z: 'PIZZA', b: 'BANANA', r: 'STRAWBERRY' };
   const OPPOSITES = { DOOR: ['OPEN', 'CLOSED'], RIVER: ['COLD', 'HOT'], MOUNTAIN: ['LOW', 'HIGH'], WALL: ['LOW', 'HIGH'] };
 
@@ -263,12 +265,15 @@ const WP = (function () {
     const A = WORDS[a], B = WORDS[b], C = WORDS[c];
     if (B.t === 'can' && (A.t === 'pro' || A.t === 'noun') && C.t === 'verb') return { ok: true, kind: 'can', subj: a, verb: c };
     if (B.t === 'is' && (A.t === 'noun' || a === 'HE' || a === 'SHE') && C.t === 'adj') return { ok: true, kind: 'is', subj: a, adj: c };
+    if (B.t === 'cant' && (A.t === 'pro' || A.t === 'noun') && C.t === 'verb') return { ok: true, kind: 'cant', subj: a, verb: c };
     if (B.t === 'want' && (a === 'I' || a === 'WE' || a === 'YOU') && C.t === 'noun') return { ok: true, kind: 'want', subj: a, obj: c };
+    if (B.t === 'wants' && (a === 'HE' || a === 'SHE' || A.t === 'noun') && C.t === 'noun') return { ok: true, kind: 'want', subj: a, obj: c };
     return { ok: false };
   }
   function sentenceJP(s) {
     const S = WORDS[s.subj].jp;
     if (s.kind === 'can') return S + 'は ' + WORDS[s.verb].abil;
+    if (s.kind === 'cant') return S + 'は ' + WORDS[s.verb].neg;
     if (s.kind === 'is') return S + 'は ' + WORDS[s.adj].jp;
     return S + 'は ' + WORDS[s.obj].jp + 'が ほしい';
   }
@@ -276,7 +281,7 @@ const WP = (function () {
   function diagnose(ws) {
     if (ws.length === 2) {
       const A = WORDS[ws[0]], B = WORDS[ws[1]];
-      if ((A.t === 'pro' || A.t === 'noun') && (B.t === 'can' || B.t === 'is' || B.t === 'want')) return null; // unfinished, fine
+      if ((A.t === 'pro' || A.t === 'noun') && (B.t === 'can' || B.t === 'cant' || B.t === 'is' || B.t === 'want' || B.t === 'wants')) return null; // unfinished, fine
     }
     for (let i = 0; i + 2 < ws.length; i++) {
       const tri = [ws[i], ws[i + 1], ws[i + 2]];
@@ -285,8 +290,8 @@ const WP = (function () {
     for (let i = 0; i + 1 < ws.length; i++) {
       const A = WORDS[ws[i]], B = WORDS[ws[i + 1]];
       if (B.t === 'is' && (ws[i] === 'I' || ws[i] === 'WE' || ws[i] === 'YOU')) return 'beIs';
-      if (B.t === 'want' && A.t !== 'pro') return 'wantNoun';
-      if (B.t === 'want' && (ws[i] === 'HE' || ws[i] === 'SHE')) return 'wantHe';
+      if (B.t === 'want' && !(ws[i] === 'I' || ws[i] === 'WE' || ws[i] === 'YOU')) return 'wantS';
+      if (B.t === 'wants' && (ws[i] === 'I' || ws[i] === 'WE' || ws[i] === 'YOU')) return 'wantsI';
     }
     return 'nosense';
   }
@@ -339,11 +344,17 @@ const WP = (function () {
   // Turns sentences into what the world does
   function resolve(L, sentences) {
     const names = L.hero.names;
-    const abil = new Set(), props = {}, wants = new Set(), conflicts = [];
+    const abil = new Set(), cant = new Set(), props = {}, wants = new Set(), conflicts = [];
     for (const s of sentences) {
       s.effect = false;
-      if (s.kind === 'can' && names.includes(s.subj)) { abil.add(s.verb); s.effect = true; }
-      else if (s.kind === 'want' && s.subj === 'I' && names.includes('I')) { wants.add(s.obj); s.effect = true; }
+      if (s.kind === 'cant' && names.includes(s.subj)) { cant.add(s.verb); s.effect = true; }
+    }
+    for (const s of sentences) {
+      if (s.kind === 'can' && names.includes(s.subj)) {
+        if (cant.has(s.verb)) { conflicts.push(s.verb + ": CAN ⇄ CAN'T"); }
+        else { abil.add(s.verb); s.effect = true; }
+      }
+      else if (s.kind === 'want' && names.includes(s.subj)) { wants.add(s.obj); s.effect = true; }
       else if (s.kind === 'is') { (props[s.subj] = props[s.subj] || new Set()).add(s.adj); }
     }
     const R = { abil, wants, conflicts, door: false, river: false, mountain: false, wall: false };
@@ -445,29 +456,31 @@ const HERO = {
 };
 
 const LEVELS = [
-  { id: 1, title: 'ドアを あけよう', gp: 'IS + ようす', hero: HERO.I,
+  { id: 1, title: 'ドアを あけよう', gp: "IS + ようす", hero: HERO.I,
     tip: "ことばブロックを おして、ぶんを つくろう!",
     hint: "DOOR IS OPEN の ぶんを つくるよ。OPEN を うえへ おしてみよう。",
-    words: ["DOOR", "IS", "OPEN"],
+    words: ["DOOR","IS","OPEN"],
     map: ['#########',
           '#.12.#..#',
           '#@..3D.S#',
           '#....#..#',
           '#########'] },
-  { id: 2, title: 'じゅんばん だいじ!', gp: 'ことばの じゅんばん', hero: HERO.I,
+
+  { id: 2, title: 'じゅんばん だいじ!', gp: "ことばの じゅんばん", hero: HERO.I,
     tip: "ぶんは ひだり→みぎ、うえ→した に よむよ。",
     hint: "OPEN IS DOOR は まちがい。DOOR IS OPEN に ならべかえよう。ブロックは たてにも おせるよ。",
-    words: ["DOOR", "IS", "OPEN"],
+    words: ["DOOR","IS","OPEN"],
     map: ['##########',
           '#.....#..#',
           '#.321.D.S#',
           '#@....#..#',
           '#.....#..#',
           '##########'] },
-  { id: 3, title: 'しまって いる!', gp: 'OPEN ⇄ CLOSED', hero: HERO.I,
+
+  { id: 3, title: 'しまって いる!', gp: "OPEN ⇄ CLOSED", hero: HERO.I,
     tip: "OPEN と CLOSED は はんたいの ことば。ぶつかると ドアは あかないよ。",
     hint: "CLOSED を どかして、OPEN を いれよう。",
-    words: ["DOOR", "IS", "CLOSED", "OPEN"],
+    words: ["DOOR","IS","CLOSED","OPEN"],
     map: ['#########',
           '#....#..#',
           '#.123D.S#',
@@ -475,80 +488,88 @@ const LEVELS = [
           '#..4.#..#',
           '#@...#..#',
           '#########'] },
-  { id: 4, title: 'つめたい かわ', gp: 'IS + ようす', hero: HERO.I,
+
+  { id: 4, title: 'つめたい かわ', gp: "IS + ようす", hero: HERO.I,
     tip: "かわが つめたいと…?",
     hint: "RIVER IS COLD で かわが こおるよ。HOT だと ぎゃくだね。",
-    words: ["RIVER", "IS", "COLD", "HOT"],
+    words: ["RIVER","IS","COLD","HOT"],
     map: ['#########',
           '#...4R..#',
           '#@13.R.S#',
           '#..2.R..#',
           '#....R..#',
           '#########'] },
-  { id: 5, title: 'ひくい やま', gp: 'IS + ようす', hero: HERO.I,
+
+  { id: 5, title: 'ひくい やま', gp: "IS + ようす", hero: HERO.I,
     tip: "やまが ひくければ、あるいて こえられる!",
     hint: "MOUNTAIN IS LOW を つくろう。HIGH は ちがうよ。",
-    words: ["MOUNTAIN", "IS", "LOW", "HIGH"],
+    words: ["MOUNTAIN","IS","LOW","HIGH"],
     map: ['#########',
           '#..3.M..#',
           '#.1.@M.S#',
           '#4.2.M..#',
           '#....M..#',
           '#########'] },
-  { id: 6, title: 'およげる!', gp: 'I CAN + うごき', hero: HERO.I,
+
+  { id: 6, title: 'およげる!', gp: "I CAN + うごき", hero: HERO.I,
     tip: "I CAN SWIM =「わたしは およげる」。ぶんを つくると、あなたに ちからが でるよ。",
     hint: "かわを わたるには?  I CAN SWIM を つくろう。",
-    words: ["I", "CAN", "SWIM", "JUMP"],
+    words: ["I","CAN","SWIM","JUMP"],
     map: ['#########',
           '#..2.R..#',
           '#@3..R.S#',
           '#4.1.R..#',
           '#....R..#',
           '#########'] },
-  { id: 7, title: 'ジャンプ!', gp: 'CAN + うごき', hero: HERO.DOG,
+
+  { id: 7, title: 'ジャンプ!', gp: "CAN + うごき", hero: HERO.DOG,
     tip: "こんどは あなたが イヌ! DOG CAN … と つくろう。",
     hint: "かべは およげない。どの うごきが いいかな?",
-    words: ["DOG", "CAN", "JUMP", "SWIM"],
+    words: ["DOG","CAN","JUMP","SWIM"],
     map: ['#########',
           '#...3W..#',
           '#@24.W.S#',
           '#..1.W..#',
           '#....W..#',
           '#########'] },
-  { id: 8, title: 'のぼれる!', gp: 'CAN + うごき', hero: HERO.MONKEY,
+
+  { id: 8, title: 'のぼれる!', gp: "CAN + うごき", hero: HERO.MONKEY,
     tip: "やまを のぼれるのは だれ?",
     hint: "MONKEY CAN … の あとに はいる ことばは?",
-    words: ["MONKEY", "CAN", "CLIMB", "JUMP"],
+    words: ["MONKEY","CAN","CLIMB","JUMP"],
     map: ['#########',
           '#.2..M..#',
           '#@...M.S#',
           '#.13.M..#',
           '#...4M..#',
           '#########'] },
-  { id: 9, title: 'そらを とぼう', gp: 'CAN + うごき', hero: HERO.CAT,
+
+  { id: 9, title: 'そらを とぼう', gp: "CAN + うごき", hero: HERO.CAT,
     tip: "かわも やまも あるよ。ぶんは ひとつだけ!",
     hint: "かわも やまも こえられる うごきは?",
-    words: ["CAT", "CAN", "FLY", "SWIM", "CLIMB"],
+    words: ["CAT","CAN","FLY","SWIM","CLIMB"],
     map: ['###########',
           '#.1..R.M..#',
           '#@.4.R.M.S#',
           '#..32R.M..#',
           '#5...R.M..#',
           '###########'] },
-  { id: 10, title: 'かれ? かのじょ?', gp: 'he / she', hero: HERO.GIRL,
+
+  { id: 10, title: 'かれ? かのじょ?', gp: "he / she", hero: HERO.GIRL,
     tip: "あなたは おんなのこ。おんなのこは \"she\" だよ。",
     hint: "\"I\" や \"HE\" だと うごかないよ。",
-    words: ["SHE", "CAN", "SWIM", "I", "HE"],
+    words: ["SHE","CAN","SWIM","I","HE"],
     map: ['#########',
           '#....R..#',
           '#@51.R.S#',
           '#.3..R..#',
           '#4.2.R..#',
           '#########'] },
-  { id: 11, title: 'ふたつの ルール', gp: 'CAN + うごき ×2', hero: HERO.BOY,
+
+  { id: 11, title: 'ふたつの ルール', gp: "CAN + うごき ×2", hero: HERO.BOY,
     tip: "ぶんは いくつ あっても いいよ。",
     hint: "かわには SWIM、かべには JUMP。",
-    words: ["HE", "CAN", "SWIM", "JUMP", "HE", "CAN"],
+    words: ["HE","CAN","SWIM","JUMP","HE","CAN"],
     map: ['###########',
           '#.12.R.W..#',
           '#...3R.W..#',
@@ -556,21 +577,45 @@ const LEVELS = [
           '#...4R.W..#',
           '#.56.R.W..#',
           '###########'] },
-  { id: 12, title: 'ほしい もの', gp: 'I WANT + たべもの', hero: HERO.I,
+
+  { id: 12, title: 'できない!', gp: "CAN'T", hero: HERO.DOG,
+    tip: "CAN'T =「できない」。CAN と CAN'T は はんたいの ことばだよ。",
+    hint: "DOG CAN'T JUMP だと とべない。CAN'T を CAN に かえよう。",
+    words: ["DOG","CAN'T","JUMP","CAN"],
+    map: ['#########',
+          '#....W..#',
+          '#@123W.S#',
+          '#....W..#',
+          '#.4..W..#',
+          '#########'] },
+
+  { id: 13, title: 'かのじょは およげない?', gp: "she CAN'T", hero: HERO.GIRL,
+    tip: "あなたは おんなのこ。CAN'T が あると およげないよ。",
+    hint: "SHE CAN'T SWIM を SHE CAN SWIM に なおそう。",
+    words: ["SHE","CAN'T","SWIM","CAN","I","HE"],
+    map: ['#########',
+          '#..6.R..#',
+          '#@123R.S#',
+          '#.4.5R..#',
+          '#....R..#',
+          '#########'] },
+
+  { id: 14, title: 'ほしい もの', gp: "I WANT + たべもの", hero: HERO.I,
     tip: "えいごは「わたしは ほしい リンゴ」の じゅんばんだよ。",
     hint: "マップに あるのは なに? I WANT … を つくって、さわろう!",
     goal: "ほしい ものに さわろう!",
-    words: ["I", "WANT", "APPLE", "CAKE"],
+    words: ["I","WANT","APPLE","CAKE"],
     map: ['#########',
           '#.2..4..#',
           '#@..31.a#',
           '#.......#',
           '#########'] },
-  { id: 13, title: 'リンゴは かわの むこう', gp: 'WANT + CAN', hero: HERO.I,
+
+  { id: 15, title: 'リンゴは かわの むこう', gp: "WANT + CAN", hero: HERO.I,
     tip: "ほしい ものが とおくに ある ときは…?",
     hint: "I WANT APPLE と I CAN SWIM、ふたつ いるよ。",
     goal: "ほしい ものに さわろう!",
-    words: ["I", "WANT", "APPLE", "I", "CAN", "SWIM"],
+    words: ["I","WANT","APPLE","I","CAN","SWIM"],
     map: ['#########',
           '#.12.R..#',
           '#@..3R.a#',
@@ -578,52 +623,80 @@ const LEVELS = [
           '#...6R..#',
           '#....R..#',
           '#########'] },
-  { id: 14, title: 'ピザが たべたい!', gp: 'WANT + IS', hero: HERO.I,
+
+  { id: 16, title: 'ピザが たべたい!', gp: "WANT + IS", hero: HERO.I,
     tip: "ケーキも みえるけど、いけるのは どっち?",
     hint: "ドアは あけられる。かわは わたれない。",
     goal: "ほしい ものに さわろう!",
-    words: ["I", "WANT", "PIZZA", "DOOR", "IS", "OPEN"],
+    words: ["I","WANT","PIZZA","DOOR","IS","OPEN"],
     map: ['###########',
           '#.45.D...z#',
           '#@...######',
           '#216.######',
           '#.3..R...k#',
           '###########'] },
-  { id: 15, title: 'クロス!', gp: 'CAN を シェア', hero: HERO.BOY,
+
+  { id: 17, title: 'かれは ほしい', gp: "he / she WANTS", hero: HERO.BOY,
+    tip: "he / she の ときは WANT に s が つくよ → WANTS!",
+    hint: "HE WANTS APPLE を つくろう。I WANT は あなたの ことじゃないよ。",
+    goal: "ほしい ものに さわろう!",
+    words: ["HE","WANTS","APPLE","WANT","I"],
+    map: ['#########',
+          '#4......#',
+          '#@1..3.a#',
+          '#..2.5..#',
+          '#########'] },
+
+  { id: 18, title: 'クロス!', gp: "CAN を シェア", hero: HERO.BOY,
     tip: "ひとつの CAN を、ふたつの ぶんで つかえるよ。",
     hint: "CAN を まんなかに して、十じに ならべてみよう。",
-    words: ["CAN", "HE", "HE", "JUMP", "SWIM"],
+    words: ["CAN","HE","HE","JUMP","SWIM"],
     map: ['###########',
           '#....R.W..#',
           '#@213R.W.S#',
           '#.5..R.W..#',
           '#..4.R.W..#',
           '###########'] },
-  { id: 16, title: 'IS を シェア', gp: 'IS を シェア', hero: HERO.I,
+
+  { id: 19, title: 'IS を シェア', gp: "IS を シェア", hero: HERO.I,
     tip: "こんどは IS が まんなか!",
     hint: "DOOR IS OPEN と RIVER IS COLD、IS は ひとつだけ。",
-    words: ["DOOR", "RIVER", "IS", "OPEN", "COLD"],
+    words: ["DOOR","RIVER","IS","OPEN","COLD"],
     map: ['###########',
           '#....R.#..#',
           '#@2.1R.#..#',
           '#.3.5R.D.S#',
           '#..4.R.#..#',
           '###########'] },
-  { id: 17, title: 'L の かたち', gp: 'I を シェア', hero: HERO.I,
+
+  { id: 20, title: 'L の かたち', gp: "I を シェア", hero: HERO.I,
     tip: "I から ふたつの ぶんが のびるよ。",
     hint: "I WANT CAKE (よこ) と I CAN SWIM (たて)。",
     goal: "ほしい ものに さわろう!",
-    words: ["I", "WANT", "CAKE", "CAN", "SWIM"],
+    words: ["I","WANT","CAKE","CAN","SWIM"],
     map: ['#########',
           '#1...R..#',
           '#@453R.k#',
           '#..2.R..#',
           '#....R..#',
           '#########'] },
-  { id: 18, title: 'さきに およごう', gp: 'たてに よむ', hero: HERO.I,
+
+  { id: 21, title: 'かのじょは ケーキが ほしい', gp: "WANTS + CAN", hero: HERO.GIRL,
+    tip: "SHE から ふたつの ぶんが のびるよ。",
+    hint: "SHE WANTS CAKE (よこ) と SHE CAN SWIM (たて)。",
+    goal: "ほしい ものに さわろう!",
+    words: ["SHE","WANTS","CAKE","CAN","SWIM"],
+    map: ['#########',
+          '#.23.R..#',
+          '#@...R.k#',
+          '#451.R..#',
+          '#....R..#',
+          '#########'] },
+
+  { id: 22, title: 'さきに およごう', gp: "たてに よむ", hero: HERO.I,
     tip: "むこうがわに ついてから、ドアを あけよう。",
     hint: "まず I CAN SWIM。わたったら、しまの ことばを ならべよう。たてでも OK!",
-    words: ["I", "CAN", "SWIM", "DOOR", "IS", "OPEN"],
+    words: ["I","CAN","SWIM","DOOR","IS","OPEN"],
     map: ['##########',
           '#...R4.###',
           '#.2.R..###',
@@ -631,21 +704,23 @@ const LEVELS = [
           '#3..R6.###',
           '#...R..###',
           '##########'] },
-  { id: 19, title: 'にほんごと ちがう!', gp: 'SVO の じゅんばん', hero: HERO.I,
+
+  { id: 23, title: 'にほんごと ちがう!', gp: "SVO の じゅんばん", hero: HERO.I,
     tip: "にほんご「わたしは リンゴが ほしい」→ えいごは I WANT APPLE。「ほしい」が まんなか!",
     hint: "I APPLE WANT は にほんごの じゅんばん。えいごの じゅんばんに なおそう。",
     goal: "ほしい ものに さわろう!",
-    words: ["I", "APPLE", "WANT"],
+    words: ["I","APPLE","WANT"],
     map: ['#########',
           '#.......#',
           '#@123..a#',
           '#.......#',
           '#########'] },
-  { id: 20, title: 'ぜんぶ つかおう!', gp: 'ぜんぶ ミックス', hero: HERO.I,
+
+  { id: 24, title: 'ぜんぶ つかおう!', gp: "ぜんぶ ミックス", hero: HERO.I,
     tip: "これまでの ルールを ぜんぶ つかおう。",
     hint: "ピザを ほしがって、かわを およいで、ドアを あけよう。",
     goal: "ほしい ものに さわろう!",
-    words: ["I", "WANT", "PIZZA", "CAN", "SWIM", "DOOR", "IS", "OPEN"],
+    words: ["I","WANT","PIZZA","CAN","SWIM","DOOR","IS","OPEN"],
     map: ['############',
           '#1...R...###',
           '#4.32R67.###',
@@ -656,7 +731,7 @@ const LEVELS = [
 
 if (typeof module !== 'undefined') module.exports = LEVELS;
 
-const PAR = [8, 20, 17, 16, 19, 18, 19, 18, 24, 22, 11, 22, 10, 25, 21, 19, 28, 23, 20, 25];
+const PAR = [8, 20, 17, 16, 19, 18, 19, 18, 24, 22, 11, 19, 18, 22, 10, 25, 20, 21, 19, 28, 28, 23, 20, 25];
 (function () {
   'use strict';
   const $ = s => document.querySelector(s);
@@ -667,8 +742,8 @@ const PAR = [8, 20, 17, 16, 19, 18, 19, 18, 24, 22, 11, 22, 10, 25, 21, 19, 28, 
   const MSG = {
     order: 'じゅんばんが ちがうよ。えいごは「だれが → どうなの」の じゅんばん!',
     beIs: 'I / we / you の あとに IS は つかえないよ。',
-    wantNoun: 'WANT の まえには I が くるよ。',
-    wantHe: 'he / she + want は まだ ならっていないよ。I で つかおう。',
+    wantS: 'WANT は I / we / you と いっしょ。he / she / なまえ の ときは WANTS だよ。',
+    wantsI: 'I / we / you の ときは WANTS じゃなくて WANT だよ。',
     nosense: 'その ならびは ぶんに ならないよ。'
   };
 

@@ -73,7 +73,7 @@ button { font: inherit; cursor: pointer; }
 }
 .blk b { letter-spacing: .3px; } .blk i { font-style: normal; font-weight: 800; opacity: .8; }
 .t-pro, .t-noun { background: #ffb347; color: #5a3200; }
-.t-can, .t-is, .t-want { background: #ff6f9c; color: #fff; }
+.t-can, .t-cant, .t-is, .t-want, .t-wants { background: #ff6f9c; color: #fff; }
 .t-verb { background: #5fd38d; color: #0b3d22; }
 .t-adj { background: #ffd93b; color: #5a4600; }
 .blk.ok { outline: 4px solid #1fbf5a; outline-offset: 1px; }
@@ -189,8 +189,8 @@ const PAR = /*PAR*/[];
   const MSG = {
     order: 'じゅんばんが ちがうよ。えいごは「だれが → どうなの」の じゅんばん!',
     beIs: 'I / we / you の あとに IS は つかえないよ。',
-    wantNoun: 'WANT の まえには I が くるよ。',
-    wantHe: 'he / she + want は まだ ならっていないよ。I で つかおう。',
+    wantS: 'WANT は I / we / you と いっしょ。he / she / なまえ の ときは WANTS だよ。',
+    wantsI: 'I / we / you の ときは WANTS じゃなくて WANT だよ。',
     nosense: 'その ならびは ぶんに ならないよ。'
   };
 
