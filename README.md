@@ -7,3 +7,6 @@ Baba Is You-style sentence puzzle for NEW HORIZON Elementary 5–6 (2024) vocabu
 - `src/gen.js` scatters blocks randomly and keeps layouts the solver can beat.
 
 Grammar covered: IS + adjective, CAN / CAN'T + verb, I WANT / HE-SHE WANTS + food, SVO word order. (CAN'T and WANTS are grammar forms, not in the vocab list.)
+
+## Credits
+Tiles, UI and sounds by [Kenney](https://kenney.nl) (CC0): New Platformer Pack, UI Pack Pixel Adventure, Game Icons, Interface Sounds. Characters, grass, bushes, star and food are AI-generated.
