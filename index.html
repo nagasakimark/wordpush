@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Word Push! ことばブロック</title>
+<style>
+:root { --t: 64px; --ink: #23415a; --sun: #ffcf3f; --sunD: #e0a800; --sky: #8fd8ff; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; overflow: hidden; }
+body {
+  font-family: "Arial Rounded MT Bold", "Hiragino Maru Gothic ProN", "M PLUS Rounded 1c", "Noto Sans JP", "Meiryo", system-ui, sans-serif;
+  color: var(--ink);
+  background: radial-gradient(circle at 15% 8%, #fff7c2 0 60px, transparent 62px), linear-gradient(#7fd2ff 0%, #d6f3ff 50%, #b9ec8e 100%);
+}
+.hidden { display: none !important; }
+button { font: inherit; cursor: pointer; }
+.btn {
+  background: var(--sun); color: #5a3a00; border: 0; border-bottom: 5px solid var(--sunD);
+  border-radius: 16px; padding: 8px 14px; font-weight: 800; font-size: 16px; line-height: 1.1;
+}
+.btn:active { transform: translateY(3px); border-bottom-width: 2px; }
+.btn.blue { background: #4cb8ff; color: #fff; border-bottom-color: #1d8fdc; }
+.btn.green { background: #5fd38d; color: #0b3d22; border-bottom-color: #2fa75f; }
+.btn.pink { background: #ff7aa2; color: #fff; border-bottom-color: #d9487a; }
+
+/* ---------- MENU ---------- */
+#menu { position: absolute; inset: 0; overflow-y: auto; padding: 18px 16px 30px; text-align: center; }
+#menu h1 { margin: 6px 0 0; font-size: clamp(36px, 7vw, 64px); letter-spacing: 1px; color: #ff6f3c; text-shadow: 0 4px 0 #fff, 0 7px 0 rgba(0,0,0,.12); }
+#menu .sub { margin: 4px 0 14px; font-weight: 800; font-size: clamp(15px, 2.6vw, 20px); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 0 auto 16px; }
+.legend span { font-size: 14px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,.7); padding: 4px 10px; border-radius: 99px; }
+.chip { display: inline-block; min-width: 54px; text-align: center; padding: 3px 8px; border-radius: 9px; font-weight: 900; font-size: 13px; box-shadow: 0 3px 0 rgba(0,0,0,.22); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; max-width: 980px; margin: 0 auto; }
+.card {
+  background: #fff; border: 0; border-radius: 20px; padding: 12px 10px 12px; text-align: center; color: var(--ink);
+  box-shadow: 0 6px 0 rgba(35,65,90,.18); position: relative; min-height: 104px;
+}
+.card:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(35,65,90,.18); }
+.card .n { position: absolute; left: 8px; top: 8px; background: #ff6f3c; color: #fff; border-radius: 50%; width: 30px; height: 30px; line-height: 30px; font-weight: 900; }
+.card .ti { margin: 18px 0 4px; font-weight: 900; font-size: 16px; }
+.card .gp { font-size: 12px; font-weight: 800; color: #fff; background: #4cb8ff; display: inline-block; padding: 2px 8px; border-radius: 99px; }
+.card .done { position: absolute; right: 8px; top: 6px; font-size: 22px; }
+.foot { margin-top: 18px; font-size: 13px; font-weight: 700; opacity: .75; }
+
+/* ---------- GAME ---------- */
+#game { position: absolute; inset: 0; display: flex; flex-direction: column; }
+#top { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(255,255,255,.78); border-bottom: 4px solid var(--sun); flex-wrap: wrap; }
+#top .title { font-weight: 900; font-size: clamp(15px, 2.4vw, 22px); flex: 1; min-width: 140px; }
+#top .title small { display: inline-block; margin-left: 8px; font-size: 12px; background: #4cb8ff; color: #fff; padding: 2px 8px; border-radius: 99px; }
+#stage { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 310px; gap: 12px; padding: 10px 12px 12px; }
+#boardWrap { position: relative; min-height: 0; min-width: 0; display: flex; align-items: center; justify-content: center; }
+#board { position: relative; border-radius: 18px; background: #9ae063; box-shadow: 0 8px 0 rgba(35,65,90,.2), 0 0 0 6px #fff; touch-action: none; }
+.tile { position: absolute; display: flex; align-items: center; justify-content: center; }
+.tile.floor.a { background: #a8e873; } .tile.floor.b { background: #9ce066; }
+.tile.bush { background: #3fa84b; border-radius: 10px; box-shadow: inset 0 -5px 0 rgba(0,0,0,.18); }
+.tile .em { line-height: 1; transition: transform .25s, opacity .25s; }
+.tile.river { background: #4cc3ff; box-shadow: inset 0 0 0 2px rgba(255,255,255,.35); }
+.tile.mountain { background: #b9d98a; } .tile.wall { background: #e8d8b8; } .tile.door { background: #e8c690; }
+.tile.river.frozen { background: #bfeaff; }
+.tile.terrain.pass .em { transform: scale(.5); opacity: .55; }
+.tile.river.frozen .em { transform: scale(1); opacity: 1; }
+.tile.terrain.can::after { content: "✓"; position: absolute; right: 3px; top: 1px; font-size: calc(var(--t) * .28); font-weight: 900; color: #1f9d4b; }
+.tile.goal .em { animation: bob 1.2s ease-in-out infinite; }
+.tile.wanted { box-shadow: inset 0 0 0 4px #ffd93b; border-radius: 12px; }
+@keyframes bob { 50% { transform: translateY(-8%) scale(1.08); } }
+
+.instant .blk, .instant #hero { transition: none !important; }
+.blk, #hero { position: absolute; left: 0; top: 0; transition: transform .12s ease-out; will-change: transform; }
+.blk {
+  border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+  font-weight: 900; box-shadow: 0 5px 0 rgba(0,0,0,.25), inset 0 3px 0 rgba(255,255,255,.35); user-select: none; z-index: 3; line-height: 1.05;
+}
+.blk b { letter-spacing: .3px; } .blk i { font-style: normal; font-weight: 800; opacity: .8; }
+.t-pro, .t-noun { background: #ffb347; color: #5a3200; }
+.t-can, .t-is, .t-want { background: #ff6f9c; color: #fff; }
+.t-verb { background: #5fd38d; color: #0b3d22; }
+.t-adj { background: #ffd93b; color: #5a4600; }
+.blk.ok { outline: 4px solid #1fbf5a; outline-offset: 1px; }
+.blk.soft { outline: 4px solid #8ec9ee; outline-offset: 1px; }
+.blk.bad { outline: 4px solid #ff4d4d; outline-offset: 1px; animation: shake .35s; }
+@keyframes shake { 25% { margin-left: -4px; } 75% { margin-left: 4px; } }
+#hero { z-index: 5; display: flex; align-items: center; justify-content: center; transition: transform .12s ease-out; pointer-events: none; }
+#hero span { display: block; filter: drop-shadow(0 5px 0 rgba(0,0,0,.22)); animation: idle 1.4s ease-in-out infinite; }
+#hero.hop span { animation: hop .3s; } #hero.bump span { animation: shake .25s; }
+@keyframes idle { 50% { transform: translateY(-5%); } }
+@keyframes hop { 40% { transform: translateY(-45%) scale(1.15); } }
+
+/* side panel */
+#side { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow-y: auto; }
+.panel { background: rgba(255,255,255,.9); border-radius: 18px; padding: 10px 12px; box-shadow: 0 5px 0 rgba(35,65,90,.15); }
+.panel h3 { margin: 0 0 6px; font-size: 14px; color: #ff6f3c; letter-spacing: .5px; }
+#hcard { display: flex; align-items: center; gap: 10px; }
+#hcard .big { font-size: 40px; line-height: 1; }
+#hcard .t { font-weight: 800; font-size: 14px; } #hcard .t b { font-size: 17px; }
+#sents { display: flex; flex-direction: column; gap: 6px; min-height: 46px; }
+.sent { background: #f2fbff; border-radius: 12px; padding: 6px 8px; border: 3px solid #cfe9f7; }
+.sent.ok { border-color: #1fbf5a; background: #effcf3; }
+.sent .row { display: flex; gap: 4px; flex-wrap: wrap; }
+.sent .jp { font-size: 13px; font-weight: 800; margin-top: 4px; }
+.sent .note { font-size: 12px; font-weight: 800; color: #1f9d4b; } .sent:not(.ok) .note { color: #6a87a0; }
+.none { font-size: 13px; font-weight: 700; opacity: .6; }
+#msg { font-weight: 800; font-size: 14px; line-height: 1.45; min-height: 64px; }
+#msg.warn { background: #fff0f0; color: #b3261e; }
+#msg.hint { background: #fff8d6; }
+.side-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.mini-legend { display: flex; gap: 5px; flex-wrap: wrap; }
+.mini-legend .chip { min-width: 0; font-size: 11px; padding: 2px 7px; }
+#dpad { display: none; position: absolute; right: 10px; bottom: 10px; width: 150px; height: 150px; z-index: 20; }
+#dpad button { position: absolute; width: 50px; height: 50px; border-radius: 14px; border: 0; background: rgba(255,255,255,.88); font-size: 24px; box-shadow: 0 4px 0 rgba(35,65,90,.25); color: var(--ink); }
+@media (pointer: coarse) { #dpad { display: block; } }
+@media (max-width: 860px) {
+  #stage { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+  #side { flex-direction: row; flex-wrap: wrap; max-height: 36vh; } #side .panel { flex: 1 1 240px; }
+}
+
+/* overlays */
+#win { position: absolute; inset: 0; background: rgba(35,65,90,.55); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 12px; }
+#winbox { background: #fff; border-radius: 28px; padding: 22px 26px; max-width: 460px; width: 100%; text-align: center; box-shadow: 0 10px 0 rgba(0,0,0,.2); animation: pop .35s; }
+@keyframes pop { from { transform: scale(.6); opacity: 0; } }
+#winbox h2 { margin: 0; font-size: 36px; color: #ff6f3c; } #winbox .stars { font-size: 40px; margin: 4px 0; }
+#winbox .sent { text-align: left; margin: 6px 0; } #winbox .stat { font-weight: 800; margin: 6px 0 12px; }
+#winbox .btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.confetti { position: fixed; top: -40px; font-size: 28px; z-index: 60; pointer-events: none; animation: fall linear forwards; }
+@keyframes fall { to { transform: translateY(110vh) rotate(540deg); } }
+body.nojp .blk i { display: none; }
+</style>
+</head>
+<body>
+
+<div id="menu">
+  <h1>Word Push!</h1>
+  <p class="sub">ことばブロックを おして、ぶんを つくろう!</p>
+  <div class="legend">
+    <span><b class="chip t-noun">DOG</b> なまえ</span>
+    <span><b class="chip t-can">CAN</b> つなぐ</span>
+    <span><b class="chip t-verb">SWIM</b> うごき</span>
+    <span><b class="chip t-adj">OPEN</b> ようす</span>
+  </div>
+  <div class="grid" id="levelGrid"></div>
+  <p class="foot">プロトタイプ ・ NEW HORIZON Elementary 5・6 (2024) の たんごで あそぶよ</p>
+</div>
+
+<div id="game" class="hidden">
+  <div id="top">
+    <button class="btn blue" id="bMenu">☰ メニュー</button>
+    <div class="title" id="ttl"></div>
+    <button class="btn" id="bHint">💡 ヒント</button>
+    <button class="btn green" id="bUndo">↶ もどす</button>
+    <button class="btn pink" id="bReset">⟲ やりなおし</button>
+  </div>
+  <div id="stage">
+    <div id="boardWrap"><div id="board"></div></div>
+    <div id="side">
+      <div class="panel"><div id="hcard"><div class="big" id="hEmoji"></div><div class="t" id="hText"></div></div></div>
+      <div class="panel"><h3>いま の ぶん</h3><div id="sents"></div></div>
+      <div class="panel" id="msg"></div>
+      <div class="panel">
+        <div class="mini-legend">
+          <b class="chip t-noun">なまえ</b><b class="chip t-can">つなぐ</b><b class="chip t-verb">うごき</b><b class="chip t-adj">ようす</b>
+        </div>
+        <div class="side-btns" style="margin-top:8px">
+          <button class="btn" id="bJp" style="font-size:13px;padding:6px 10px">🇯🇵 にほんご</button>
+          <button class="btn" id="bSnd" style="font-size:13px;padding:6px 10px">🔇 おと</button>
+        </div>
+        <div style="margin-top:6px;font-size:12px;font-weight:700;opacity:.7">うごく: ↑↓←→ / WASD　もどす: Z　やりなおし: R</div>
+      </div>
+    </div>
+  </div>
+  <div id="dpad">
+    <button style="left:50px;top:0" data-d="U">▲</button><button style="left:0;top:50px" data-d="L">◀</button>
+    <button style="left:100px;top:50px" data-d="R">▶</button><button style="left:50px;top:100px" data-d="D">▼</button>
+  </div>
+</div>
+
+<div id="win" class="hidden"><div id="winbox"></div></div>
+
+<script>
+// Word Push engine — pure logic (no DOM). Works in browser and Node.
+const WP = (function () {
+  'use strict';
+
+  // ---------- Vocabulary (every word except CAN / IS is from NH Elementary 2024 list) ----------
+  const WORDS = {
+    // pronouns
+    I:   { t: 'pro', jp: 'わたし' },
+    WE:  { t: 'pro', jp: 'わたしたち' },
+    YOU: { t: 'pro', jp: 'あなた' },
+    HE:  { t: 'pro', jp: 'かれ' },
+    SHE: { t: 'pro', jp: 'かのじょ' },
+    // animals / people
+    DOG:     { t: 'noun', jp: 'イヌ', e: '🐶' },
+    CAT:     { t: 'noun', jp: 'ネコ', e: '🐱' },
+    BIRD:    { t: 'noun', jp: 'とり', e: '🐦' },
+    FISH:    { t: 'noun', jp: 'さかな', e: '🐟' },
+    MONKEY:  { t: 'noun', jp: 'サル', e: '🐵' },
+    PANDA:   { t: 'noun', jp: 'パンダ', e: '🐼' },
+    PENGUIN: { t: 'noun', jp: 'ペンギン', e: '🐧' },
+    BOY:     { t: 'noun', jp: 'おとこのこ', e: '👦' },
+    GIRL:    { t: 'noun', jp: 'おんなのこ', e: '👧' },
+    // terrain things
+    DOOR:     { t: 'noun', jp: 'ドア', e: '🚪' },
+    RIVER:    { t: 'noun', jp: 'かわ', e: '🌊' },
+    MOUNTAIN: { t: 'noun', jp: 'やま', e: '⛰️' },
+    WALL:     { t: 'noun', jp: 'かべ', e: '🧱' },
+    // food (things you can want)
+    APPLE:      { t: 'noun', jp: 'リンゴ', e: '🍎' },
+    CAKE:       { t: 'noun', jp: 'ケーキ', e: '🍰' },
+    PIZZA:      { t: 'noun', jp: 'ピザ', e: '🍕' },
+    BANANA:     { t: 'noun', jp: 'バナナ', e: '🍌' },
+    STRAWBERRY: { t: 'noun', jp: 'イチゴ', e: '🍓' },
+    // grammar glue
+    CAN:  { t: 'can',  jp: 'できる' },
+    IS:   { t: 'is',   jp: 'です' },
+    WANT: { t: 'want', jp: 'ほしい' },
+    // ability verbs
+    FLY:   { t: 'verb', jp: 'とぶ',     abil: 'とべる' },
+    SWIM:  { t: 'verb', jp: 'およぐ',   abil: 'およげる' },
+    JUMP:  { t: 'verb', jp: 'ジャンプ', abil: 'ジャンプできる' },
+    CLIMB: { t: 'verb', jp: 'のぼる',   abil: 'のぼれる' },
+    // adjectives
+    OPEN:   { t: 'adj', jp: 'あいている' },
+    CLOSED: { t: 'adj', jp: 'しまっている' },
+    COLD:   { t: 'adj', jp: 'つめたい' },
+    HOT:    { t: 'adj', jp: 'あつい' },
+    LOW:    { t: 'adj', jp: 'ひくい' },
+    HIGH:   { t: 'adj', jp: 'たかい' },
+  };
+  const GRAMMAR_WORDS = ['CAN', 'IS'];
+  const ITEM_CHARS = { a: 'APPLE', k: 'CAKE', z: 'PIZZA', b: 'BANANA', r: 'STRAWBERRY' };
+  const OPPOSITES = { DOOR: ['OPEN', 'CLOSED'], RIVER: ['COLD', 'HOT'], MOUNTAIN: ['LOW', 'HIGH'], WALL: ['LOW', 'HIGH'] };
+
+  // ---------- Level parsing ----------
+  function parseLevel(def) {
+    const rows = def.map;
+    const h = rows.length, w = rows[0].length;
+    const tiles = [];
+    const p = [];
+    let hx = -1, hy = -1;
+    const words = def.words;
+    const slot = new Array(words.length).fill(null);
+    for (let y = 0; y < h; y++) {
+      if (rows[y].length !== w) throw new Error('Level ' + def.id + ' row ' + y + ' has wrong width');
+      const r = [];
+      for (let x = 0; x < w; x++) {
+        const ch = rows[y][x];
+        if (ch === '@') { hx = x; hy = y; r.push('.'); }
+        else if (ch >= '0' && ch <= '9') {
+          const idx = ch === '0' ? 9 : Number(ch) - 1;
+          if (idx >= words.length) throw new Error('Level ' + def.id + ' digit ' + ch + ' has no word');
+          slot[idx] = [x, y]; r.push('.');
+        } else r.push(ch);
+      }
+      tiles.push(r);
+    }
+    slot.forEach((s, i) => { if (!s) throw new Error('Level ' + def.id + ' word ' + words[i] + ' not placed'); p.push(s[0], s[1]); });
+    if (hx < 0) throw new Error('Level ' + def.id + ' has no hero');
+    return Object.assign({}, def, { w, h, tiles, st0: { hx, hy, p } });
+  }
+
+  // ---------- Sentences ----------
+  function checkSentence(a, b, c) {
+    const A = WORDS[a], B = WORDS[b], C = WORDS[c];
+    if (B.t === 'can' && (A.t === 'pro' || A.t === 'noun') && C.t === 'verb') return { ok: true, kind: 'can', subj: a, verb: c };
+    if (B.t === 'is' && (A.t === 'noun' || a === 'HE' || a === 'SHE') && C.t === 'adj') return { ok: true, kind: 'is', subj: a, adj: c };
+    if (B.t === 'want' && (a === 'I' || a === 'WE' || a === 'YOU') && C.t === 'noun') return { ok: true, kind: 'want', subj: a, obj: c };
+    return { ok: false };
+  }
+  function sentenceJP(s) {
+    const S = WORDS[s.subj].jp;
+    if (s.kind === 'can') return S + 'は ' + WORDS[s.verb].abil;
+    if (s.kind === 'is') return S + 'は ' + WORDS[s.adj].jp;
+    return S + 'は ' + WORDS[s.obj].jp + 'が ほしい';
+  }
+  const PERMS = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+  function diagnose(ws) {
+    if (ws.length === 2) {
+      const A = WORDS[ws[0]], B = WORDS[ws[1]];
+      if ((A.t === 'pro' || A.t === 'noun') && (B.t === 'can' || B.t === 'is' || B.t === 'want')) return null; // unfinished, fine
+    }
+    for (let i = 0; i + 2 < ws.length; i++) {
+      const tri = [ws[i], ws[i + 1], ws[i + 2]];
+      for (const pm of PERMS) if (checkSentence(tri[pm[0]], tri[pm[1]], tri[pm[2]]).ok) return 'order';
+    }
+    for (let i = 0; i + 1 < ws.length; i++) {
+      const A = WORDS[ws[i]], B = WORDS[ws[i + 1]];
+      if (B.t === 'is' && (ws[i] === 'I' || ws[i] === 'WE' || ws[i] === 'YOU')) return 'beIs';
+      if (B.t === 'want' && A.t !== 'pro') return 'wantNoun';
+      if (B.t === 'want' && (ws[i] === 'HE' || ws[i] === 'SHE')) return 'wantHe';
+    }
+    return 'nosense';
+  }
+
+  function blocksOf(L, st) {
+    return L.words.map((word, i) => ({ id: i, word, x: st.p[2 * i], y: st.p[2 * i + 1] }));
+  }
+
+  // Reads all rows (left→right) and columns (top→bottom). Returns valid sentences + broken runs.
+  function parseRules(L, st) {
+    const bl = blocksOf(L, st);
+    const at = new Map();
+    for (const b of bl) at.set(b.x + ',' + b.y, b);
+    const runs = [];
+    for (let y = 0; y < L.h; y++) {
+      let run = [];
+      for (let x = 0; x <= L.w; x++) {
+        const b = at.get(x + ',' + y);
+        if (b) run.push(b); else { if (run.length >= 2) runs.push(run); run = []; }
+      }
+    }
+    for (let x = 0; x < L.w; x++) {
+      let run = [];
+      for (let y = 0; y <= L.h; y++) {
+        const b = at.get(x + ',' + y);
+        if (b) run.push(b); else { if (run.length >= 2) runs.push(run); run = []; }
+      }
+    }
+    const sentences = [], bad = [];
+    const seen = new Set();
+    for (const run of runs) {
+      let any = false;
+      for (let i = 0; i + 2 < run.length; i++) {
+        const s = checkSentence(run[i].word, run[i + 1].word, run[i + 2].word);
+        if (s.ok) {
+          any = true;
+          s.ids = [run[i].id, run[i + 1].id, run[i + 2].id];
+          s.text = run[i].word + ' ' + run[i + 1].word + ' ' + run[i + 2].word;
+          sentences.push(s);
+        }
+      }
+      if (!any) {
+        const code = diagnose(run.map(b => b.word));
+        if (code) bad.push({ ids: run.map(b => b.id), code, text: run.map(b => b.word).join(' ') });
+      }
+    }
+    return { sentences, bad };
+  }
+
+  // Turns sentences into what the world does
+  function resolve(L, sentences) {
+    const names = L.hero.names;
+    const abil = new Set(), props = {}, wants = new Set(), conflicts = [];
+    for (const s of sentences) {
+      s.effect = false;
+      if (s.kind === 'can' && names.includes(s.subj)) { abil.add(s.verb); s.effect = true; }
+      else if (s.kind === 'want' && s.subj === 'I' && names.includes('I')) { wants.add(s.obj); s.effect = true; }
+      else if (s.kind === 'is') { (props[s.subj] = props[s.subj] || new Set()).add(s.adj); }
+    }
+    const R = { abil, wants, conflicts, door: false, river: false, mountain: false, wall: false };
+    const pass = (noun, good) => {
+      const pr = props[noun]; if (!pr) return false;
+      const [g, b] = OPPOSITES[noun];
+      if (pr.has(g) && pr.has(b)) { conflicts.push(noun + ': ' + g + ' ⇄ ' + b); return false; }
+      return good === g && pr.has(g);
+    };
+    R.door = pass('DOOR', 'OPEN');
+    R.river = pass('RIVER', 'COLD');
+    R.mountain = pass('MOUNTAIN', 'LOW');
+    R.wall = pass('WALL', 'LOW');
+    for (const s of sentences) {
+      if (s.kind === 'is') {
+        s.effect = (s.subj === 'DOOR' && R.door && s.adj === 'OPEN') || (s.subj === 'RIVER' && R.river && s.adj === 'COLD') ||
+          (s.subj === 'MOUNTAIN' && R.mountain && s.adj === 'LOW') || (s.subj === 'WALL' && R.wall && s.adj === 'LOW');
+      }
+    }
+    return R;
+  }
+
+  function rulesOf(L, st) {
+    const pr = parseRules(L, st);
+    const R = resolve(L, pr.sentences);
+    R.sentences = pr.sentences; R.bad = pr.bad;
+    return R;
+  }
+
+  // ---------- Movement ----------
+  const FLOOR = ch => ch === '.' || ch === 'S' || ITEM_CHARS[ch] !== undefined;
+  function tileAt(L, x, y) { return (x < 0 || y < 0 || x >= L.w || y >= L.h) ? '#' : L.tiles[y][x]; }
+  function blockIndexAt(st, x, y) {
+    for (let i = 0; i < st.p.length; i += 2) if (st.p[i] === x && st.p[i + 1] === y) return i >> 1;
+    return -1;
+  }
+
+  // returns new state or null if the move is blocked. info.hop set when hero jumps.
+  function move(L, st, dx, dy, info) {
+    const nx = st.hx + dx, ny = st.hy + dy;
+    const ch = tileAt(L, nx, ny);
+    if (ch === '#') return null;
+    const bi = blockIndexAt(st, nx, ny);
+    if (bi >= 0) {
+      // push a chain of blocks
+      const chain = [];
+      let cx = nx, cy = ny;
+      while (true) {
+        const i = blockIndexAt(st, cx, cy);
+        if (i < 0) break;
+        chain.push(i); cx += dx; cy += dy;
+      }
+      if (tileAt(L, cx, cy) !== '.') return null; // blocks only slide on plain floor
+      const p = st.p.slice();
+      for (const i of chain) { p[2 * i] += dx; p[2 * i + 1] += dy; }
+      if (info) info.pushed = chain.length;
+      return { hx: nx, hy: ny, p };
+    }
+    if (FLOOR(ch)) return { hx: nx, hy: ny, p: st.p };
+    const R = rulesOf(L, st);
+    const fly = R.abil.has('FLY');
+    let ok = false;
+    if (ch === 'D') ok = R.door;
+    else if (ch === 'R') ok = R.river || fly || R.abil.has('SWIM');
+    else if (ch === 'M') ok = R.mountain || fly || R.abil.has('CLIMB');
+    else if (ch === 'W') ok = R.wall || fly;
+    if (ok) return { hx: nx, hy: ny, p: st.p };
+    if (ch === 'W' && R.abil.has('JUMP')) {
+      const tx = nx + dx, ty = ny + dy;
+      if (FLOOR(tileAt(L, tx, ty)) && blockIndexAt(st, tx, ty) < 0) {
+        if (info) info.hop = true;
+        return { hx: tx, hy: ty, p: st.p };
+      }
+    }
+    return null;
+  }
+
+  function isWin(L, st) {
+    const ch = tileAt(L, st.hx, st.hy);
+    if (ch === 'S') return true;
+    if (ITEM_CHARS[ch]) return rulesOf(L, st).wants.has(ITEM_CHARS[ch]);
+    return false;
+  }
+
+  return { WORDS, ITEM_CHARS, GRAMMAR_WORDS, OPPOSITES, parseLevel, checkSentence, sentenceJP, rulesOf, move, isWin, blocksOf, tileAt };
+})();
+if (typeof module !== 'undefined') module.exports = WP;
+
+// Map legend:  # bush   . floor   @ you   S star(goal)   R river   M mountain   W wall   D door
+//              a apple  k cake  z pizza  b banana  r strawberry     1-9,0 = word blocks (index into words[])
+// Every level below was proven beatable by solve.js (BFS over all push sequences).
+const HERO = {
+  I:      { emoji: '🧒', names: ['I'],           jp: 'I (わたし)' },
+  BOY:    { emoji: '👦', names: ['BOY', 'HE'],   jp: 'おとこのこ' },
+  GIRL:   { emoji: '👧', names: ['GIRL', 'SHE'], jp: 'おんなのこ' },
+  DOG:    { emoji: '🐶', names: ['DOG'],         jp: 'イヌ' },
+  CAT:    { emoji: '🐱', names: ['CAT'],         jp: 'ネコ' },
+  MONKEY: { emoji: '🐵', names: ['MONKEY'],      jp: 'サル' },
+};
+
+const LEVELS = [
+  { id: 1, title: 'ドアを あけよう', gp: 'IS + ようす', hero: HERO.I,
+    tip: "ことばブロックを おして、ぶんを つくろう!",
+    hint: "DOOR IS OPEN の ぶんを つくるよ。OPEN を うえへ おしてみよう。",
+    words: ["DOOR", "IS", "OPEN"],
+    map: ['#########',
+          '#.12.#..#',
+          '#@..3D.S#',
+          '#....#..#',
+          '#########'] },
+  { id: 2, title: 'じゅんばん だいじ!', gp: 'ことばの じゅんばん', hero: HERO.I,
+    tip: "ぶんは ひだり→みぎ、うえ→した に よむよ。",
+    hint: "OPEN IS DOOR は まちがい。DOOR IS OPEN に ならべかえよう。ブロックは たてにも おせるよ。",
+    words: ["DOOR", "IS", "OPEN"],
+    map: ['##########',
+          '#.....#..#',
+          '#.321.D.S#',
+          '#@....#..#',
+          '#.....#..#',
+          '##########'] },
+  { id: 3, title: 'しまって いる!', gp: 'OPEN ⇄ CLOSED', hero: HERO.I,
+    tip: "OPEN と CLOSED は はんたいの ことば。ぶつかると ドアは あかないよ。",
+    hint: "CLOSED を どかして、OPEN を いれよう。",
+    words: ["DOOR", "IS", "CLOSED", "OPEN"],
+    map: ['#########',
+          '#....#..#',
+          '#.123D.S#',
+          '#....#..#',
+          '#..4.#..#',
+          '#@...#..#',
+          '#########'] },
+  { id: 4, title: 'つめたい かわ', gp: 'IS + ようす', hero: HERO.I,
+    tip: "かわが つめたいと…?",
+    hint: "RIVER IS COLD で かわが こおるよ。HOT だと ぎゃくだね。",
+    words: ["RIVER", "IS", "COLD", "HOT"],
+    map: ['#########',
+          '#...4R..#',
+          '#@13.R.S#',
+          '#..2.R..#',
+          '#....R..#',
+          '#########'] },
+  { id: 5, title: 'ひくい やま', gp: 'IS + ようす', hero: HERO.I,
+    tip: "やまが ひくければ、あるいて こえられる!",
+    hint: "MOUNTAIN IS LOW を つくろう。HIGH は ちがうよ。",
+    words: ["MOUNTAIN", "IS", "LOW", "HIGH"],
+    map: ['#########',
+          '#..3.M..#',
+          '#.1.@M.S#',
+          '#4.2.M..#',
+          '#....M..#',
+          '#########'] },
+  { id: 6, title: 'およげる!', gp: 'I CAN + うごき', hero: HERO.I,
+    tip: "I CAN SWIM =「わたしは およげる」。ぶんを つくると、あなたに ちからが でるよ。",
+    hint: "かわを わたるには?  I CAN SWIM を つくろう。",
+    words: ["I", "CAN", "SWIM", "JUMP"],
+    map: ['#########',
+          '#..2.R..#',
+          '#@3..R.S#',
+          '#4.1.R..#',
+          '#....R..#',
+          '#########'] },
+  { id: 7, title: 'ジャンプ!', gp: 'CAN + うごき', hero: HERO.DOG,
+    tip: "こんどは あなたが イヌ! DOG CAN … と つくろう。",
+    hint: "かべは およげない。どの うごきが いいかな?",
+    words: ["DOG", "CAN", "JUMP", "SWIM"],
+    map: ['#########',
+          '#...3W..#',
+          '#@24.W.S#',
+          '#..1.W..#',
+          '#....W..#',
+          '#########'] },
+  { id: 8, title: 'のぼれる!', gp: 'CAN + うごき', hero: HERO.MONKEY,
+    tip: "やまを のぼれるのは だれ?",
+    hint: "MONKEY CAN … の あとに はいる ことばは?",
+    words: ["MONKEY", "CAN", "CLIMB", "JUMP"],
+    map: ['#########',
+          '#.2..M..#',
+          '#@...M.S#',
+          '#.13.M..#',
+          '#...4M..#',
+          '#########'] },
+  { id: 9, title: 'そらを とぼう', gp: 'CAN + うごき', hero: HERO.CAT,
+    tip: "かわも やまも あるよ。ぶんは ひとつだけ!",
+    hint: "かわも やまも こえられる うごきは?",
+    words: ["CAT", "CAN", "FLY", "SWIM", "CLIMB"],
+    map: ['###########',
+          '#.1..R.M..#',
+          '#@.4.R.M.S#',
+          '#..32R.M..#',
+          '#5...R.M..#',
+          '###########'] },
+  { id: 10, title: 'かれ? かのじょ?', gp: 'he / she', hero: HERO.GIRL,
+    tip: "あなたは おんなのこ。おんなのこは \"she\" だよ。",
+    hint: "\"I\" や \"HE\" だと うごかないよ。",
+    words: ["SHE", "CAN", "SWIM", "I", "HE"],
+    map: ['#########',
+          '#....R..#',
+          '#@51.R.S#',
+          '#.3..R..#',
+          '#4.2.R..#',
+          '#########'] },
+  { id: 11, title: 'ふたつの ルール', gp: 'CAN + うごき ×2', hero: HERO.BOY,
+    tip: "ぶんは いくつ あっても いいよ。",
+    hint: "かわには SWIM、かべには JUMP。",
+    words: ["HE", "CAN", "SWIM", "JUMP", "HE", "CAN"],
+    map: ['###########',
+          '#.12.R.W..#',
+          '#...3R.W..#',
+          '#@...R.W.S#',
+          '#...4R.W..#',
+          '#.56.R.W..#',
+          '###########'] },
+  { id: 12, title: 'ほしい もの', gp: 'I WANT + たべもの', hero: HERO.I,
+    tip: "えいごは「わたしは ほしい リンゴ」の じゅんばんだよ。",
+    hint: "マップに あるのは なに? I WANT … を つくって、さわろう!",
+    goal: "ほしい ものに さわろう!",
+    words: ["I", "WANT", "APPLE", "CAKE"],
+    map: ['#########',
+          '#.2..4..#',
+          '#@..31.a#',
+          '#.......#',
+          '#########'] },
+  { id: 13, title: 'リンゴは かわの むこう', gp: 'WANT + CAN', hero: HERO.I,
+    tip: "ほしい ものが とおくに ある ときは…?",
+    hint: "I WANT APPLE と I CAN SWIM、ふたつ いるよ。",
+    goal: "ほしい ものに さわろう!",
+    words: ["I", "WANT", "APPLE", "I", "CAN", "SWIM"],
+    map: ['#########',
+          '#.12.R..#',
+          '#@..3R.a#',
+          '#.45.R..#',
+          '#...6R..#',
+          '#....R..#',
+          '#########'] },
+  { id: 14, title: 'ピザが たべたい!', gp: 'WANT + IS', hero: HERO.I,
+    tip: "ケーキも みえるけど、いけるのは どっち?",
+    hint: "ドアは あけられる。かわは わたれない。",
+    goal: "ほしい ものに さわろう!",
+    words: ["I", "WANT", "PIZZA", "DOOR", "IS", "OPEN"],
+    map: ['###########',
+          '#.45.D...z#',
+          '#@...######',
+          '#216.######',
+          '#.3..R...k#',
+          '###########'] },
+  { id: 15, title: 'クロス!', gp: 'CAN を シェア', hero: HERO.BOY,
+    tip: "ひとつの CAN を、ふたつの ぶんで つかえるよ。",
+    hint: "CAN を まんなかに して、十じに ならべてみよう。",
+    words: ["CAN", "HE", "HE", "JUMP", "SWIM"],
+    map: ['###########',
+          '#....R.W..#',
+          '#@213R.W.S#',
+          '#.5..R.W..#',
+          '#..4.R.W..#',
+          '###########'] },
+  { id: 16, title: 'IS を シェア', gp: 'IS を シェア', hero: HERO.I,
+    tip: "こんどは IS が まんなか!",
+    hint: "DOOR IS OPEN と RIVER IS COLD、IS は ひとつだけ。",
+    words: ["DOOR", "RIVER", "IS", "OPEN", "COLD"],
+    map: ['###########',
+          '#....R.#..#',
+          '#@2.1R.#..#',
+          '#.3.5R.D.S#',
+          '#..4.R.#..#',
+          '###########'] },
+  { id: 17, title: 'L の かたち', gp: 'I を シェア', hero: HERO.I,
+    tip: "I から ふたつの ぶんが のびるよ。",
+    hint: "I WANT CAKE (よこ) と I CAN SWIM (たて)。",
+    goal: "ほしい ものに さわろう!",
+    words: ["I", "WANT", "CAKE", "CAN", "SWIM"],
+    map: ['#########',
+          '#1...R..#',
+          '#@453R.k#',
+          '#..2.R..#',
+          '#....R..#',
+          '#########'] },
+  { id: 18, title: 'さきに およごう', gp: 'たてに よむ', hero: HERO.I,
+    tip: "むこうがわに ついてから、ドアを あけよう。",
+    hint: "まず I CAN SWIM。わたったら、しまの ことばを ならべよう。たてでも OK!",
+    words: ["I", "CAN", "SWIM", "DOOR", "IS", "OPEN"],
+    map: ['##########',
+          '#...R4.###',
+          '#.2.R..###',
+          '#@1.R5.DS#',
+          '#3..R6.###',
+          '#...R..###',
+          '##########'] },
+  { id: 19, title: 'にほんごと ちがう!', gp: 'SVO の じゅんばん', hero: HERO.I,
+    tip: "にほんご「わたしは リンゴが ほしい」→ えいごは I WANT APPLE。「ほしい」が まんなか!",
+    hint: "I APPLE WANT は にほんごの じゅんばん。えいごの じゅんばんに なおそう。",
+    goal: "ほしい ものに さわろう!",
+    words: ["I", "APPLE", "WANT"],
+    map: ['#########',
+          '#.......#',
+          '#@123..a#',
+          '#.......#',
+          '#########'] },
+  { id: 20, title: 'ぜんぶ つかおう!', gp: 'ぜんぶ ミックス', hero: HERO.I,
+    tip: "これまでの ルールを ぜんぶ つかおう。",
+    hint: "ピザを ほしがって、かわを およいで、ドアを あけよう。",
+    goal: "ほしい ものに さわろう!",
+    words: ["I", "WANT", "PIZZA", "CAN", "SWIM", "DOOR", "IS", "OPEN"],
+    map: ['############',
+          '#1...R...###',
+          '#4.32R67.###',
+          '#5.@.R...Dz#',
+          '#....R..8###',
+          '############'] },
+];
+
+if (typeof module !== 'undefined') module.exports = LEVELS;
+
+const PAR = [8, 20, 17, 16, 19, 18, 19, 18, 24, 22, 11, 22, 10, 25, 21, 19, 28, 23, 20, 25];
+(function () {
+  'use strict';
+  const $ = s => document.querySelector(s);
+  const PARSED = LEVELS.map(WP.parseLevel);
+  const ITEM_EMOJI = { a: '🍎', k: '🍰', z: '🍕', b: '🍌', r: '🍓' };
+  const TERRAIN = { R: ['river', '🌊'], M: ['mountain', '⛰️'], W: ['wall', '🧱'], D: ['door', '🚪'] };
+  const DIRS = { U: [0, -1], D: [0, 1], L: [-1, 0], R: [1, 0] };
+  const MSG = {
+    order: 'じゅんばんが ちがうよ。えいごは「だれが → どうなの」の じゅんばん!',
+    beIs: 'I / we / you の あとに IS は つかえないよ。',
+    wantNoun: 'WANT の まえには I が くるよ。',
+    wantHe: 'he / she + want は まだ ならっていないよ。I で つかおう。',
+    nosense: 'その ならびは ぶんに ならないよ。'
+  };
+
+  let idx = 0, L, st, hist, moves, locked, soundOn = false, hintOn = false;
+  let T = 64, tileEls = [], blockEls = [], heroEl = null, terrainEls = [], itemEls = [];
+  let cleared = new Set();
+  try { cleared = new Set(JSON.parse(localStorage.getItem('wordpush_cleared') || '[]')); } catch (e) {}
+  try { if (localStorage.getItem('wordpush_nojp') === '1') document.body.classList.add('nojp'); } catch (e) {}
+
+  function save() { try { localStorage.setItem('wordpush_cleared', JSON.stringify([...cleared])); } catch (e) {} }
+  const chipHTML = w => '<b class="chip t-' + WP.WORDS[w].t + '">' + w + '</b>';
+
+  // ---------- menu ----------
+  function buildMenu() {
+    const g = $('#levelGrid'); g.innerHTML = '';
+    PARSED.forEach((lv, i) => {
+      const b = document.createElement('button'); b.className = 'card';
+      b.innerHTML = '<span class="n">' + lv.id + '</span>' + (cleared.has(lv.id) ? '<span class="done">⭐</span>' : '') +
+        '<div class="ti">' + lv.title + '</div><span class="gp">' + lv.gp + '</span>';
+      b.onclick = () => startLevel(i);
+      g.appendChild(b);
+    });
+  }
+  function showMenu() {
+    buildMenu(); $('#game').classList.add('hidden'); $('#win').classList.add('hidden'); $('#menu').classList.remove('hidden');
+    try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  }
+
+  // ---------- level ----------
+  function startLevel(i) {
+    idx = i; L = PARSED[i]; st = L.st0; hist = []; moves = 0; locked = false; hintOn = false;
+    $('#menu').classList.add('hidden'); $('#win').classList.add('hidden'); $('#game').classList.remove('hidden');
+    try { history.replaceState(null, '', '#level=' + L.id); } catch (e) {}
+    $('#ttl').innerHTML = 'Level ' + L.id + '：' + L.title + '<small>' + L.gp + '</small>';
+    $('#hEmoji').textContent = L.hero.emoji;
+    $('#hText').innerHTML = 'あなたは <b>' + L.hero.jp + '</b><br>' + (L.goal || '⭐ に さわろう!');
+    buildBoard();
+    const bd = $('#board'); bd.classList.add('instant'); layout(); refresh(); void bd.offsetWidth;
+    requestAnimationFrame(() => requestAnimationFrame(() => bd.classList.remove('instant')));
+  }
+
+  function buildBoard() {
+    const b = $('#board'); b.innerHTML = '';
+    tileEls = []; terrainEls = []; itemEls = []; blockEls = [];
+    for (let y = 0; y < L.h; y++) {
+      const row = [];
+      for (let x = 0; x < L.w; x++) {
+        const ch = L.tiles[y][x];
+        const el = document.createElement('div'); el.className = 'tile';
+        if (ch === '#') { el.classList.add('bush'); el.innerHTML = '<span class="em">🌳</span>'; }
+        else {
+          el.classList.add('floor', (x + y) % 2 ? 'a' : 'b');
+          if (TERRAIN[ch]) { el.classList.add('terrain', TERRAIN[ch][0]); el.innerHTML = '<span class="em">' + TERRAIN[ch][1] + '</span>'; terrainEls.push({ el, ch, x, y }); }
+          else if (ch === 'S') { el.classList.add('goal'); el.innerHTML = '<span class="em">⭐</span>'; }
+          else if (ITEM_EMOJI[ch]) { el.classList.add('goal'); el.innerHTML = '<span class="em">' + ITEM_EMOJI[ch] + '</span>'; itemEls.push({ el, word: WP.ITEM_CHARS[ch] }); }
+        }
+        b.appendChild(el); row.push(el);
+      }
+      tileEls.push(row);
+    }
+    L.words.forEach(w => {
+      const d = WP.WORDS[w]; const el = document.createElement('div');
+      el.className = 'blk t-' + d.t; el.innerHTML = '<b>' + w + '</b><i>' + d.jp + '</i>';
+      b.appendChild(el); blockEls.push(el);
+    });
+    heroEl = document.createElement('div'); heroEl.id = 'hero'; heroEl.innerHTML = '<span>' + L.hero.emoji + '</span>';
+    b.appendChild(heroEl);
+  }
+
+  function layout() {
+    if (!L) return;
+    const wrap = $('#boardWrap');
+    const aw = wrap.clientWidth - 24, ah = wrap.clientHeight - 24;
+    T = Math.max(28, Math.min(86, Math.floor(Math.min(aw / L.w, ah / L.h))));
+    document.documentElement.style.setProperty('--t', T + 'px');
+    const b = $('#board'); b.style.width = T * L.w + 'px'; b.style.height = T * L.h + 'px';
+    for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) {
+      const el = tileEls[y][x];
+      el.style.cssText = 'width:' + T + 'px;height:' + T + 'px;left:' + x * T + 'px;top:' + y * T + 'px;font-size:' + T * 0.7 + 'px';
+    }
+    blockEls.forEach((el, i) => {
+      const w = L.words[i], n = w.length;
+      el.style.width = el.style.height = (T - 6) + 'px';
+      el.style.fontSize = (n <= 4 ? T * 0.3 : n <= 6 ? T * 0.25 : n <= 7 ? T * 0.2 : T * 0.165) + 'px';
+      el.querySelector('i').style.fontSize = Math.max(8, T * 0.15) + 'px';
+    });
+    heroEl.style.width = heroEl.style.height = T + 'px'; heroEl.style.fontSize = T * 0.78 + 'px';
+    position();
+  }
+
+  function position() {
+    blockEls.forEach((el, i) => { el.style.transform = 'translate(' + (st.p[2 * i] * T + 3) + 'px,' + (st.p[2 * i + 1] * T + 3) + 'px)'; });
+    heroEl.style.transform = 'translate(' + st.hx * T + 'px,' + st.hy * T + 'px)';
+  }
+
+  // ---------- rules → screen ----------
+  function refresh() {
+    const R = WP.rulesOf(L, st);
+    const okIds = new Set(), softIds = new Set(), badIds = new Set();
+    R.sentences.forEach(s => s.ids.forEach(id => (s.effect ? okIds : softIds).add(id)));
+    R.bad.forEach(b => b.ids.forEach(id => badIds.add(id)));
+    blockEls.forEach((el, i) => {
+      el.classList.toggle('ok', okIds.has(i));
+      el.classList.toggle('soft', !okIds.has(i) && softIds.has(i));
+      el.classList.toggle('bad', moves > 0 && badIds.has(i) && !okIds.has(i) && !softIds.has(i));
+    });
+    const fly = R.abil.has('FLY');
+    terrainEls.forEach(t => {
+      let pass = false, can = false;
+      if (t.ch === 'D') pass = R.door;
+      else if (t.ch === 'R') { pass = R.river; can = R.river || fly || R.abil.has('SWIM'); }
+      else if (t.ch === 'M') { pass = R.mountain; can = R.mountain || fly || R.abil.has('CLIMB'); }
+      else if (t.ch === 'W') { pass = R.wall; can = R.wall || fly || R.abil.has('JUMP'); }
+      if (t.ch === 'D') can = pass;
+      t.el.classList.toggle('pass', pass);
+      t.el.classList.toggle('can', can && !pass);
+      t.el.classList.toggle('frozen', t.ch === 'R' && R.river);
+      t.el.querySelector('.em').textContent = (t.ch === 'R' && R.river) ? '🧊' : TERRAIN[t.ch][1];
+    });
+    itemEls.forEach(it => it.el.classList.toggle('wanted', R.wants.has(it.word)));
+
+    // sentence panel
+    const box = $('#sents');
+    if (!R.sentences.length) box.innerHTML = '<div class="none">ブロックを ならべて ぶんを つくろう</div>';
+    else box.innerHTML = R.sentences.map(s => {
+      const words = s.text.split(' ');
+      let note;
+      if (s.effect) note = '✓ はたらいている!';
+      else if (s.kind === 'is') note = '○ ぶんは OK。でも なにも おこらない';
+      else note = '○ ぶんは OK。でも あなたの ことじゃないよ';
+      return '<div class="sent ' + (s.effect ? 'ok' : '') + '"><div class="row">' + words.map(chipHTML).join('') + '</div>' +
+        '<div class="jp">' + WP.sentenceJP(s) + '</div><div class="note">' + note + '</div></div>';
+    }).join('');
+
+    // message line
+    const m = $('#msg'); m.className = 'panel';
+    if (R.conflicts.length) { m.classList.add('warn'); m.textContent = '⚠ はんたいの ことばが ぶつかって いるよ! (' + R.conflicts.join(', ') + ')'; }
+    else if (R.bad.length && moves > 0) { m.classList.add('warn'); m.textContent = '✗ ' + R.bad[0].text + '：' + MSG[R.bad[0].code]; }
+    else if (hintOn) { m.classList.add('hint'); m.textContent = '💡 ' + L.hint; }
+    else m.textContent = L.tip;
+  }
+
+  // ---------- input ----------
+  function go(dir) {
+    if (locked || !L) return;
+    const [dx, dy] = DIRS[dir]; const info = {};
+    const ns = WP.move(L, st, dx, dy, info);
+    if (!ns) { heroEl.classList.remove('bump'); void heroEl.offsetWidth; heroEl.classList.add('bump'); sfx('bump'); return; }
+    hist.push(st); st = ns; moves++;
+    position();
+    if (info.hop) { heroEl.classList.add('hop'); setTimeout(() => heroEl.classList.remove('hop'), 320); }
+    sfx(info.pushed ? 'push' : 'step');
+    refresh();
+    if (WP.isWin(L, st)) win();
+  }
+  function undo() { if (locked || !hist.length) return; st = hist.pop(); moves = Math.max(0, moves - 1); position(); refresh(); sfx('step'); }
+  function restart() { if (!L) return; st = L.st0; hist = []; moves = 0; locked = false; hintOn = false; position(); refresh(); }
+
+  function win() {
+    locked = true; cleared.add(L.id); save(); sfx('win');
+    const par = PAR[idx] || moves;
+    const stars = moves <= par * 1.4 ? 3 : moves <= par * 2.5 ? 2 : 1;
+    const R = WP.rulesOf(L, st);
+    const sents = R.sentences.filter(s => s.effect).map(s =>
+      '<div class="sent ok"><div class="row">' + s.text.split(' ').map(chipHTML).join('') + '</div><div class="jp">' + WP.sentenceJP(s) + '</div></div>').join('');
+    const last = idx >= PARSED.length - 1;
+    setTimeout(() => {
+      $('#winbox').innerHTML = '<h2>できた! 🎉</h2><div class="stars">' + '⭐'.repeat(stars) + '☆'.repeat(3 - stars) + '</div>' +
+        '<div class="stat">' + moves + ' て (ベスト ' + par + ' て)</div>' + sents +
+        '<div class="btns"><button class="btn" id="wMenu">☰ メニュー</button><button class="btn pink" id="wAgain">⟲ もういちど</button>' +
+        (last ? '' : '<button class="btn green" id="wNext">つぎへ ▶</button>') + '</div>';
+      $('#win').classList.remove('hidden');
+      $('#wMenu').onclick = showMenu; $('#wAgain').onclick = () => { $('#win').classList.add('hidden'); restart(); };
+      if (!last) $('#wNext').onclick = () => startLevel(idx + 1);
+      confetti();
+    }, 500);
+  }
+  function confetti() {
+    const em = ['⭐', '🎉', '✨', '🎈', '🍎'];
+    for (let i = 0; i < 28; i++) {
+      const s = document.createElement('div'); s.className = 'confetti'; s.textContent = em[i % em.length];
+      s.style.left = Math.random() * 100 + 'vw'; s.style.animationDuration = 1.6 + Math.random() * 1.8 + 's'; s.style.animationDelay = Math.random() * .5 + 's';
+      document.body.appendChild(s); setTimeout(() => s.remove(), 4500);
+    }
+  }
+
+  // tiny sound effects (off by default; no voice)
+  let ac = null;
+  function sfx(kind) {
+    if (!soundOn) return;
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const seq = { step: [[330, .04]], push: [[220, .06]], bump: [[120, .08]], win: [[523, .12], [659, .12], [784, .2]] }[kind];
+      let t = ac.currentTime;
+      seq.forEach(([f, d]) => {
+        const o = ac.createOscillator(), g = ac.createGain(); o.type = 'triangle'; o.frequency.value = f;
+        g.gain.setValueAtTime(.08, t); g.gain.exponentialRampToValueAtTime(.001, t + d); o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + d); t += d;
+      });
+    } catch (e) {}
+  }
+
+  document.addEventListener('keydown', e => {
+    if (!L || $('#game').classList.contains('hidden')) return;
+    const k = e.key.toLowerCase();
+    const map = { arrowup: 'U', w: 'U', arrowdown: 'D', s: 'D', arrowleft: 'L', a: 'L', arrowright: 'R', d: 'R' };
+    if (!$('#win').classList.contains('hidden')) { if (k === 'enter' && $('#wNext')) $('#wNext').click(); return; }
+    if (map[k]) { e.preventDefault(); go(map[k]); }
+    else if (k === 'z' || k === 'u' || k === 'backspace') { e.preventDefault(); undo(); }
+    else if (k === 'r') restart();
+    else if (k === 'h') { hintOn = !hintOn; refresh(); }
+    else if (k === 'escape') showMenu();
+  });
+  document.querySelectorAll('#dpad button').forEach(b => b.addEventListener('pointerdown', e => { e.preventDefault(); go(b.dataset.d); }));
+  let tx = 0, ty = 0;
+  $('#boardWrap').addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+  $('#boardWrap').addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+    go(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'R' : 'L') : (dy > 0 ? 'D' : 'U'));
+  }, { passive: true });
+
+  $('#bMenu').onclick = showMenu; $('#bUndo').onclick = undo; $('#bReset').onclick = restart;
+  $('#bHint').onclick = () => { hintOn = !hintOn; refresh(); };
+  $('#bJp').onclick = () => { document.body.classList.toggle('nojp'); try { localStorage.setItem('wordpush_nojp', document.body.classList.contains('nojp') ? '1' : '0'); } catch (e) {} };
+  $('#bSnd').onclick = () => { soundOn = !soundOn; $('#bSnd').textContent = soundOn ? '🔊 おと' : '🔇 おと'; sfx('step'); };
+  window.addEventListener('resize', layout);
+  if (window.ResizeObserver) new ResizeObserver(layout).observe($('#boardWrap'));
+
+  const m = location.hash.match(/level=(\d+)/);
+  if (m && PARSED[+m[1] - 1]) startLevel(+m[1] - 1); else showMenu();
+  window.__wp = { go, undo, restart, startLevel, get state() { return { st, moves, idx }; } }; // for testing
+})();
+</script>
+</body>
+</html>
