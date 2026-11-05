@@ -5,6 +5,7 @@ d = 'src/' if os.path.exists('src/template.html') else ''
 par = json.loads(subprocess.check_output(['node', '--max-old-space-size=4000', '-e',
   "const {solve}=require('./%ssolve.js');const L=require('./%slevels.js');console.log(JSON.stringify(L.map(d=>solve(d).moves)))" % (d, d)]))
 t = open(d + 'template.html', encoding='utf-8').read()
+t = t.replace('/*QR*/', open(d + 'qr.js', encoding='utf-8').read())
 t = t.replace('/*ENGINE*/', open(d + 'engine.js', encoding='utf-8').read())
 t = t.replace('/*LEVELS*/', open(d + 'levels.js', encoding='utf-8').read())
 t = t.replace('/*PAR*/[]', json.dumps(par))

@@ -151,7 +151,7 @@ body.nojp .jpx { display: none; }
 <div id="menu">
   <div id="logo"></div>
   <p class="sub">ことばブロックを おして、ぶんを つくろう!</p>
-  <div class="toprow"><button class="sbtn blue" id="bHow" style="height:52px;font-size:18px;padding:0 14px">あそびかた を みる</button><div class="legend">
+  <div class="toprow"><button class="sbtn blue" id="bHow" style="height:52px;font-size:18px;padding:0 14px">あそびかた を みる</button><button class="sbtn green" id="bQR" style="height:52px;font-size:18px;padding:0 14px" aria-label="スキャンして あそぼう">QRコード</button><div class="legend">
     <span><b class="chip t-noun">DOG</b> なまえ</span><span><b class="chip t-can">CAN</b> つなぐ</span>
     <span><b class="chip t-verb">SWIM</b> うごき</span><span><b class="chip t-adj">OPEN</b> ようす</span>
   </div></div>
@@ -187,6 +187,9 @@ body.nojp .jpx { display: none; }
 <div id="tut" class="hidden"><div id="tutbox"><div id="tutHead"><h2 id="tutT"></h2></div><div id="tutBody"><div id="tutGuide"><img id="tutImg" alt=""></div><div id="tutMain"><div class="say" id="tutSay"></div><div class="vis" id="tutVis"></div></div></div><div id="tutNav"><button class="sbtn sm red" id="tSkip">スキップ</button><div id="tutDots"></div><div style="display:flex;gap:8px"><button class="sbtn sm blue" id="tBack">◀ もどる</button><button class="sbtn green" id="tNext">つぎへ ▶</button></div></div></div></div>
 <div id="win" class="hidden"><div id="winbox"></div></div>
 
+<script>
+/*QR*/
+</script>
 <script>
 /*ENGINE*/
 /*LEVELS*/
@@ -694,6 +697,7 @@ const ATLAS = /*ATLAS*/{};
   $('#tBack').onclick = () => showTut(ti - 1);
   $('#tNext').onclick = () => { if (ti >= SL.length - 1) closeTut(true); else showTut(ti + 1); };
   $('#bHow').onclick = openTut; $('#bHow2').onclick = openTut;
+  $('#bQR').innerHTML = '<span style="display:inline-block;vertical-align:middle;margin-right:6px">' + QRPLAY.icon(24, '#fff') + '</span>QRコード'; $('#bQR').onclick = () => QRPLAY.open();
   document.addEventListener('keydown', e => {
     if ($('#tut').classList.contains('hidden')) return;
     e.stopImmediatePropagation(); e.preventDefault(); if (e.key === 'ArrowRight' || e.key === 'Enter') $('#tNext').click(); else if (e.key === 'ArrowLeft') $('#tBack').click(); else if (e.key === 'Escape') closeTut(false);
