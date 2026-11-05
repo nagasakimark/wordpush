@@ -21,7 +21,7 @@ const LEVELS = [
           '#....#..#',
           '#########'] },
 
-  { id: 2, title: 'じゅんばん だいじ!', gp: "ことばの じゅんばん", hero: HERO.I,
+  { id: 2, title: 'じゅんばん だいじ!', gp: "じゅんばん", hero: HERO.I,
     tip: "ぶんは ひだり→みぎ、うえ→した に よむよ。",
     hint: "OPEN IS DOOR は まちがい。DOOR IS OPEN に ならべかえよう。ブロックは たてにも おせるよ。",
     words: ["DOOR","IS","OPEN"],
@@ -144,7 +144,7 @@ const LEVELS = [
           '#.4..W..#',
           '#########'] },
 
-  { id: 13, title: 'かのじょは およげない?', gp: "she CAN'T", hero: HERO.GIRL,
+  { id: 13, title: 'およげないの?', gp: "she CAN'T", hero: HERO.GIRL,
     tip: "あなたは おんなのこ。CAN'T が あると およげないよ。",
     hint: "SHE CAN'T SWIM を SHE CAN SWIM に なおそう。",
     words: ["SHE","CAN'T","SWIM","CAN","I","HE"],
@@ -155,7 +155,7 @@ const LEVELS = [
           '#....R..#',
           '#########'] },
 
-  { id: 14, title: 'ほしい もの', gp: "I WANT + たべもの", hero: HERO.I,
+  { id: 14, title: 'ほしい もの', gp: "WANT + たべもの", hero: HERO.I,
     tip: "えいごは「わたしは ほしい リンゴ」の じゅんばんだよ。",
     hint: "マップに あるのは なに? I WANT … を つくって、さわろう!",
     goal: "ほしい ものに さわろう!",
@@ -236,7 +236,7 @@ const LEVELS = [
           '#....R..#',
           '#########'] },
 
-  { id: 21, title: 'かのじょは ケーキが ほしい', gp: "WANTS + CAN", hero: HERO.GIRL,
+  { id: 21, title: 'ケーキが ほしい!', gp: "WANTS + CAN", hero: HERO.GIRL,
     tip: "SHE から ふたつの ぶんが のびるよ。",
     hint: "SHE WANTS CAKE (よこ) と SHE CAN SWIM (たて)。",
     goal: "ほしい ものに さわろう!",

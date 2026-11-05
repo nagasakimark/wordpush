@@ -59,13 +59,13 @@ button { font: inherit; cursor: pointer; border: 0; padding: 0; background: none
 .legend { display: flex; gap: 8px; justify-content: center; margin: 0 auto 10px; }
 .legend span { font-size: 13px; font-weight: 900; background: rgba(255,255,255,.85); padding: 3px 10px 3px 4px; border-radius: 99px; display: inline-flex; gap: 6px; align-items: center; border: 2px solid var(--woodD); }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; max-width: 1280px; margin: 0 auto; padding-bottom: 14px; }
-.card { position: relative; height: 106px; border: 4px solid #8a4b14; border-radius: 18px; background: linear-gradient(#fffef2, #ffeeb8); box-shadow: 0 5px 0 #8a4b14, 0 9px 8px rgba(0,0,0,.22), inset 0 3px 0 rgba(255,255,255,.9); transition: transform .08s; color: var(--ink); padding: 0; margin-bottom: 4px; }
+.card { position: relative; height: 112px; border: 4px solid #8a4b14; border-radius: 18px; background: linear-gradient(#fffef2, #ffeeb8); box-shadow: 0 5px 0 #8a4b14, 0 9px 8px rgba(0,0,0,.22), inset 0 3px 0 rgba(255,255,255,.9); transition: transform .08s; color: var(--ink); padding: 0; margin-bottom: 4px; }
 .card:hover { transform: translateY(-4px) rotate(-1deg); } .card:active { transform: translateY(3px); } .card:active { transform: translateY(2px); }
 .card .n { position: absolute; left: 4px; top: 4px; background: radial-gradient(circle at 35% 30%, #ff9a7a, #e8262b); color: #fff; border-radius: 50%; width: 28px; height: 28px; line-height: 23px; font-weight: 900; font-size: 15px; border: 3px solid #8e0f1c; text-shadow: 0 1px 0 #8e0f1c; }
 .card img.h { position: absolute; right: 4px; top: 2px; height: 50px; }
-.card .ti { position: absolute; left: 8px; right: 6px; top: 48px; font-weight: 900; font-size: 12.5px; line-height: 1.15; text-align: left; max-height: 29px; overflow: hidden; }
-.card .gp { position: absolute; left: 8px; bottom: 6px; font-size: 10.5px; font-weight: 900; color: #fff; background: linear-gradient(#7fdcff,#1b8ff0); padding: 0 8px; border-radius: 99px; border: 2px solid #0b4a96; white-space: nowrap; }
-.card .done { position: absolute; right: 4px; bottom: 2px; height: 26px; }
+.card .ti { position: absolute; left: 8px; right: 6px; top: 53px; font-weight: 900; font-size: 12px; line-height: 1.12; text-align: left; max-height: 28px; overflow: hidden; }
+.card .gp { position: absolute; left: 6px; bottom: 6px; max-width: calc(100% - 38px); overflow: hidden; text-overflow: ellipsis; font-size: 10px; letter-spacing: -.2px; font-weight: 900; color: #fff; background: linear-gradient(#7fdcff,#1b8ff0); padding: 0 8px; border-radius: 99px; border: 2px solid #0b4a96; white-space: nowrap; }
+.card .done { position: absolute; right: 3px; bottom: 3px; height: 24px; }
 .foot { margin: 12px 0 0; font-size: 12px; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
 
 /* GAME */
@@ -220,7 +220,7 @@ const ATLAS = /*ATLAS*/{};
   // ---------- practice levels (tutorial) ----------
   const PRP = [
     { id: 'れんしゅう1', title: 'れんしゅう 1：あるこう', gp: 'うごく れんしゅう', hero: HERO.I, tip: '↑ ↓ ← → キーで あるこう。⭐ に さわったら クリア!', hint: '⭐ まで あるいていこう。', words: [], map: ['#########', '#@......#', '#.......#', '#......S#', '#########'] },
-    { id: 'れんしゅう2', title: 'れんしゅう 2：おそう', gp: 'ブロックを おす', hero: HERO.I, tip: 'ブロックに ぶつかると、おせるよ。みちを あけて ⭐ へ!', hint: 'ブロックを みぎへ おして、へやの なかまで いれよう。そのあと ブロックの よこを とおるよ。', words: ['DOG'],
+    { id: 'れんしゅう2', title: 'れんしゅう 2：おしてみよう', gp: 'ブロックを おす', hero: HERO.I, tip: 'ブロックに ぶつかると、おせるよ。みちを あけて ⭐ へ!', hint: 'ブロックを みぎへ おして、へやの なかまで いれよう。そのあと ブロックの よこを とおるよ。', words: ['DOG'],
       map: ['##########', '#####....#', '#@.1.....#', '#####...S#', '##########'] }
   ];
   PRP.forEach((d, i) => PRP[i] = WP.parseLevel(d));
@@ -229,6 +229,7 @@ const ATLAS = /*ATLAS*/{};
   let cleared = new Set();
   try { cleared = new Set(JSON.parse(localStorage.getItem('wordpush_cleared') || '[]')); } catch (e) {}
   try { if (localStorage.getItem('wordpush_nojp') === '1') document.body.classList.add('nojp'); } catch (e) {}
+  try { soundOn = localStorage.getItem('wordpush_sound') === '1'; } catch (e) {}
   const save = () => { try { localStorage.setItem('wordpush_cleared', JSON.stringify([...cleared])); } catch (e) {} };
   const chipHTML = w => '<b class="chip t-' + WP.WORDS[w].t + '">' + w + '</b>';
   const heroKey = lv => HERO_KEY[lv.hero.emoji] || 'I';
@@ -241,7 +242,7 @@ const ATLAS = /*ATLAS*/{};
     [['brown', 'ui_brown'], ['blue', 'ui_blue'], ['green', 'ui_green'], ['red', 'ui_red'], ['steel', 'ui_steel'], ['cream', 'ui_cream'], ['creamgrid', 'ui_creamgrid'], ['lred', 'ui_lred']]
       .forEach(([n, k]) => rs.setProperty('--bi-' + n, 'url(' + src(k) + ')'));
     const ic = (k) => '<img class="ic" src="' + src(k) + '">';
-    const lab = { bMenu: ['i_home', 'メニュー'], bHow: ['i_info', 'あそびかた を みる'], bHow2: ['i_info', 'あそびかた'], bHint: ['i_hint', 'ヒント'], bUndo: ['i_undo', 'もどす'], bReset: ['i_restart', 'やりなおし'], bJp: ['i_info', 'にほんご'], bSnd: ['i_off', 'おと OFF'], tSkip: ['i_next', 'スキップ'], tBack: ['i_left', 'もどる'], tNext: ['i_right', 'つぎへ'] };
+    const lab = { bMenu: ['i_home', 'メニュー'], bHow: ['i_info', 'あそびかた を みる'], bHow2: ['i_info', 'あそびかた'], bHint: ['i_hint', 'ヒント'], bUndo: ['i_undo', 'もどす'], bReset: ['i_restart', 'やりなおし'], bJp: ['i_info', 'にほんご'], bSnd: [soundOn ? 'i_on' : 'i_off', soundOn ? 'おと ON' : 'おと OFF'], tSkip: ['i_next', 'スキップ'], tBack: ['i_left', 'もどる'], tNext: ['i_right', 'つぎへ'] };
     Object.keys(lab).forEach(id => { $('#' + id).innerHTML = ic(lab[id][0]) + lab[id][1]; });
     [['dU', 'i_up'], ['dL', 'i_left'], ['dR', 'i_right'], ['dD', 'i_down']].forEach(([id, k]) => { $('#' + id).innerHTML = ic(k); });
     const lg = $('#logo'); lg.innerHTML = '';
@@ -640,7 +641,7 @@ const ATLAS = /*ATLAS*/{};
   $('#bMenu').onclick = showMenu; $('#bUndo').onclick = undo; $('#bReset').onclick = restart;
   $('#bHint').onclick = () => { hintOn = !hintOn; refresh(true); };
   $('#bJp').onclick = () => { document.body.classList.toggle('nojp'); try { localStorage.setItem('wordpush_nojp', document.body.classList.contains('nojp') ? '1' : '0'); } catch (e) {} };
-  $('#bSnd').onclick = () => { soundOn = !soundOn; $('#bSnd').innerHTML = '<img class="ic" src="' + src(soundOn ? 'i_on' : 'i_off') + '">' + (soundOn ? 'おと ON' : 'おと OFF'); sfx('step'); };
+  $('#bSnd').onclick = () => { soundOn = !soundOn; try { localStorage.setItem('wordpush_sound', soundOn ? '1' : '0'); } catch (e) {} $('#bSnd').innerHTML = '<img class="ic" src="' + src(soundOn ? 'i_on' : 'i_off') + '">' + (soundOn ? 'おと ON' : 'おと OFF'); sfx('step'); };
   window.addEventListener('resize', layout);
   if (window.ResizeObserver) new ResizeObserver(layout).observe($('#boardWrap'));
 
@@ -654,9 +655,9 @@ const ATLAS = /*ATLAS*/{};
     { t: 'ようこそ!', g: 'cheer', say: 'こんにちは! いっしょに あそぼう!<small>⭐ に さわったら クリア だよ。</small>', vis: () => im('I_idle', 'hh') + '<span class="arrow">▶ ▶ ▶</span>' + im('star', 'hh') },
     { t: 'あるきかた', g: 'idle', say: '<em>↑ ↓ ← →</em> の キーで あるくよ。<small>W A S D でも いいよ。スマホは ゆびで スワイプ!</small>',
       vis: () => '<div style="position:relative;width:200px;height:130px">' + [['arr_u', 74, 0], ['arr_l', 14, 62], ['arr_d', 74, 62], ['arr_r', 134, 62]].map(a => '<img src="' + src(a[0]) + '" style="position:absolute;width:56px;left:' + a[1] + 'px;top:' + a[2] + 'px">').join('') + '</div>' },
-    { t: 'ブロックを おそう', g: 'hop', say: 'ブロックに ぶつかると、<em>おせる</em>よ!<small>ブロックは ことばが かいて あるよ。</small>',
+    { t: 'ブロックを おしてみよう', g: 'hop', say: 'ブロックに ぶつかると、<em>おせる</em>よ!<small>ブロックには ことばが かいて あるよ。</small>',
       vis: () => im('I_idle', 'hh') + tb('CAT') + '<span class="arrow">▶</span>' + '<span style="width:24px"></span>' + tb('CAT') },
-    { t: 'ブロックは ことば!', g: 'idle', say: 'ブロックの いろに は いみが あるよ。<small>ならべて、えいごの ぶんを つくろう!</small>',
+    { t: 'ブロックは ことば!', g: 'idle', say: 'ブロックの いろには いみが あるよ。<small>ならべて、えいごの ぶんを つくろう!</small>',
       vis: () => [['DOG', 'なまえ', '#f59a2e'], ['CAN', 'つなぐ', '#e9b81c'], ['SWIM', 'うごき', '#ee6f8c'], ['OPEN', 'ようす', '#4fc27a']].map(a => col(tb(a[0]), lab(a[1], a[2]))).join('') },
     { t: 'えいごの ならびかた', g: 'cheer', say: 'えいごは <em>S → V → O</em> の じゅんばん!<small>S＝だれが　V＝どうする　O＝なにを</small>',
       vis: () => '<div class="row">' + col(tb('I'), lab('S だれが', '#f59a2e')) + col(tb('WANT'), lab('V どうする', '#e9b81c')) + col(tb('APPLE'), lab('O なにを', '#f59a2e')) + '<span class="eq">＝ わたしは リンゴが ほしい</span></div>' },

@@ -11,5 +11,7 @@ t = t.replace('/*PAR*/[]', json.dumps(par))
 atlas = json.load(open(d + 'atlas.json'))
 atlas = {k: v for k, v in atlas.items() if not k.startswith('_')}
 t = t.replace('/*ATLAS*/{}', json.dumps(atlas, separators=(',', ':')))
-open('index.html' if not d else 'index.html', 'w', encoding='utf-8').write(t)
+# always write the playable game to the repo root (the folder above src/), which is what GitHub Pages serves
+out = os.path.join(os.path.dirname(here) if os.path.basename(here) == 'src' else here, 'index.html')
+open(out, 'w', encoding='utf-8').write(t)
 print('built', len(t), 'bytes; par', par)
