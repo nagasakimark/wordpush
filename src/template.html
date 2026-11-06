@@ -343,7 +343,7 @@ const ATLAS = /*ATLAS*/{};
 
   // ---------- rules → screen ----------
   let status = {}, prevOk = new Set();
-  function youTypes() { return [...R.you].filter(t => st.objs.some(o => o.t === t)); }
+  function youTypes() { return [...new Set(st.objs.filter(o => R.isYou(o)).map(o => o.t))]; }
   function refresh(quiet) {
     R = WP.rulesOf(L, st);
     const ok = new Set(), soft = new Set(), bad = new Set();
@@ -395,7 +395,7 @@ const ATLAS = /*ATLAS*/{};
     if (locked || !L || !$('#card').classList.contains('hidden')) return;
     if (dir === 'W' && !L.hasRun) return;
     const info = {};
-    const prevYou = st.objs.filter(o => R.you.has(o.t));
+    const prevYou = st.objs.filter(o => R.isYou(o));
     const ns = WP.move(L, st, dir === 'W' ? null : dir, info);
     if (!ns) {
       prevYou.forEach(o => { const a = A[o.id]; if (a) { a.bump = .35; a.bdx = (WP && { L: -1, R: 1 }[dir]) || 0; if (dir === 'L' || dir === 'R') a.face = dir === 'L' ? -1 : 1; } });
@@ -412,6 +412,7 @@ const ATLAS = /*ATLAS*/{};
       else if (ev.k === 'spawn') { const o = st.objs.find(p => p.id === ev.id); if (o) { for (let k = 0; k < 8; k++) spark(o.x + .5, o.y + .5, '#fff27a'); if (ev.has) discover('has:' + o.t, 'でてきた!', o.t, WP.WORDS[o.t].jp + 'が でてきた!'); } }
       else if (ev.k === 'sink') { for (let k = 0; k < 14; k++) splash(ev.x + .5, ev.y + .5); snd = 'push'; if (ev.you) discover('!sink', 'ぶくぶく…', ev.t, 'しずんじゃった!'); }
       else if (ev.k === 'melt') { steam(ev.x + .5, ev.y + .5); discover('!melt:' + ev.t, 'とけた!', ev.t, WP.WORDS[ev.t].jp + 'が とけちゃった!'); }
+      else if (ev.k === 'burn') { steam(ev.x + .5, ev.y + .5); P({ x: ev.x + .5, y: ev.y + .3, vy: -.6, life: 1, max: 1, size: .3, kind: 'text', text: 'あちっ!', color: '#ff6a00' }); discover('!burn', 'あちっ!', ev.t, 'やけど しちゃった!'); }
       else if (ev.k === 'open') { poof(ev.x + .5, ev.y + .5); snd = 'open'; }
       else if (ev.k === 'eat') { chomp(ev.x + .5, ev.y + .5); if (ev.you) discover('!eaten', 'ぱくっ!', ev.t, 'たべられちゃった!'); else discover('!ate:' + ev.t, 'ぱくっ!', ev.t, WP.WORDS[ev.t].jp + 'を たべた!'); }
     });
@@ -432,7 +433,7 @@ const ATLAS = /*ATLAS*/{};
 
   function win() {
     locked = true; won = true; if (mode === 'main') { cleared.add(L.title); save(); } sfx('win');
-    const yous = st.objs.filter(o => R.you.has(o.t));
+    const yous = st.objs.filter(o => R.isYou(o));
     yous.forEach(o => { const a = A[o.id]; if (a) a.cheer = 1; for (let k = 0; k < 30; k++) confettiP(o.x + .5, o.y + .3); });
     const self = yous.find(o => R.wants.some(([w, x]) => (w === '@you' || w === o.t) && x === o.t) || o.t === 'STAR');
     if (self) discover('!self', 'じぶんが ほしい!', '', 'ほしい ものが じぶん だった!');
@@ -579,10 +580,11 @@ const ATLAS = /*ATLAS*/{};
     for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) if (L.frame[y * L.w + x]) drawTile('bush' + ((hash(x, y, 5) * 4) | 0), x * T - 1, y * T - 1, S + 2);
 
     const drawList = [];
-    st.objs.forEach(o => { if (!isRiver(o)) drawList.push({ y: (A[o.id] ? A[o.id].y : o.y) + (isText(o.t) ? .45 : .5), o }); });
+    const LOW_LAYER = { DOOR: 1, FLOWER: 1, STAR: 1, KEY: 1, APPLE: 1, BANANA: 1, CAKE: 1, PIZZA: 1, STRAWBERRY: 1, FIRE: 1 };
+    st.objs.forEach(o => { if (isRiver(o)) return; const layer = isText(o.t) ? .2 : CHAR[o.t] || o.t === 'FISH' || o.t === 'FROG' || o.t === 'MOUSE' ? .4 : LOW_LAYER[o.t] ? 0 : .2; drawList.push({ y: Math.round(A[o.id] ? A[o.id].y : o.y) + layer, o }); });
     drawList.sort((a, b) => a.y - b.y).forEach(({ o }) => isText(o.t) ? drawBlock(o, time) : drawThing(o, time, dt));
     // you markers
-    st.objs.forEach(o => { if (!isText(o.t) && R.you.has(o.t)) drawYouMark(o, time); });
+    st.objs.forEach(o => { if (R.isYou(o)) drawYouMark(o, time); });
     // particles
     for (let i = parts.length - 1; i >= 0; i--) {
       const p = parts[i]; p.life -= dt; if (p.life <= 0) { parts.splice(i, 1); continue; }
@@ -609,12 +611,12 @@ const ATLAS = /*ATLAS*/{};
     ctx.restore();
   }
 
-  function explicitProps(t) { const s = new Set(R.prop[t] || []); if (R.you.has(t) && R.prop['@you']) R.prop['@you'].forEach(p => s.add(p)); return s; }
+  function explicitProps(o) { const t = o.t; const s = new Set(R.prop[t] || []); if (R.isYou(o) && R.prop['@you']) R.prop['@you'].forEach(p => s.add(p)); return s; }
   function wantedTypes() { const w = new Set(['STAR']); R.wants.forEach(([, x]) => w.add(x)); return w; }
 
   function drawThing(o, time, dt) {
     const a = A[o.id] || { x: o.x, y: o.y, sq: 0, pop: 0, hop: 0, bump: 0, face: 1 };
-    const e = WP.eff(R, o.t), ex = explicitProps(o.t), you = R.you.has(o.t);
+    const e = WP.effO(R, o), ex = explicitProps(o), you = R.isYou(o);
     let scale = 1; if (ex.has('BIG')) scale = 1.22; if (ex.has('SMALL')) scale = .74;
     const pop = a.pop > 0 ? 1 + Math.sin((a.pop / .4) * Math.PI) * .35 : 1;
     let cx = (a.x + .5) * T, by = (a.y + .94) * T;
@@ -633,7 +635,7 @@ const ATLAS = /*ATLAS*/{};
       ctx.fillStyle = g; ctx.fillRect(cx - T, gy - T, T * 2, T * 2);
       if (Math.random() < dt * 2.5) spark(a.x + .5, a.y + .5);
     }
-    if (ex.has('HOT') || o.t === 'FIRE' && e.p.has('HOT')) { if (Math.random() < dt * 5) P({ x: a.x + .5 + rnd(-.25, .25), y: a.y + .6, vx: rnd(-.2, .2), vy: rnd(-1.5, -.7), life: .7, max: .7, size: rnd(.03, .06), color: '#ffb02e', kind: 'drop' }); }
+    if (e.p.has('HOT')) { if (Math.random() < dt * 5) P({ x: a.x + .5 + rnd(-.25, .25), y: a.y + .6, vx: rnd(-.2, .2), vy: rnd(-1.5, -.7), life: .7, max: .7, size: rnd(.03, .06), color: '#ffb02e', kind: 'drop' }); }
     if (!inRiver && !(o.t === 'DOOR' || o.t === 'WALL' || o.t === 'MOUNTAIN')) shadow(cx, (a.y + .9) * T, T * .3 * scale * (fly ? .7 : 1), fly ? .15 : .24);
     ctx.save(); ctx.translate(cx, by - hop - flyUp);
     if (a.sq > 0) { const s = 1 + Math.sin(a.sq * 12.5) * .12; ctx.scale(s, 2 - s); }
@@ -659,7 +661,7 @@ const ATLAS = /*ATLAS*/{};
     else if (t === 'FLOWER') drawFlower(0, 0, T, time);
     else if (t === 'ROCK') fitImg('rock', 0, 0, T * .9, T * .8);
     else if (t === 'KEY') { ctx.rotate(Math.sin(time * 3 + o.id) * .1); fitImg('key', 0, -T * .1, T * .7, T * .6); }
-    else if (t === 'FIRE') fitImg('torch' + f2, 0, 0, T * .8, T * .95);
+    else if (t === 'FIRE') fitImg(e.p.has('HOT') ? 'torch' + f2 : 'torch_off', 0, 0, T * .8, T * .95);
     else if (t === 'FISH') fitImg('fish' + f2, 0, -T * .1, T * .8, T * .7);
     else if (t === 'FROG') fitImg(a.hop > 0 ? 'frog1' : 'frog0', 0, 0, T * .8, T * .75);
     else if (t === 'MOUSE') fitImg('mouse' + (run ? f2 : 0), 0, 0, T * .8, T * .7);

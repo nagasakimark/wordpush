@@ -38,13 +38,13 @@ const WP = (function () {
   // "nature" — what things do when no sentence says otherwise (shown in the side panel)
   const DEFAULTS = {
     TREE: ['BIG'], WALL: ['BIG'], ROCK: ['SMALL'], MOUNTAIN: ['steep'], RIVER: ['deep'],
-    DOOR: ['CLOSED'], KEY: ['SMALL'], FIRE: ['HOT'], ICE: ['COLD', 'SMALL']
+    DOOR: ['CLOSED'], KEY: ['SMALL'], FIRE: ['HOT'], ICE: ['COLD', 'BIG']
   };
   const DEF_ABIL = { FISH: ['SWIM'], FROG: ['JUMP'] };
   const NATURE_JP = {
     TREE: 'き は とおれない', WALL: 'かべ は とおれない', ROCK: 'いわ は おせる', MOUNTAIN: 'やま: のぼれないと とおれない',
     RIVER: 'かわ: およげないと はいれない', DOOR: 'ドア は しまっている', KEY: 'かぎ は おせる',
-    FIRE: 'ひ は あつい', ICE: 'こおり は つめたい・おせる', FISH: 'さかな は およげる', FROG: 'カエル は ジャンプできる',
+    FIRE: 'ひ: さわると やけど!', ICE: 'こおり: あつい ものしか とおれない', FISH: 'さかな は およげる', FROG: 'カエル は ジャンプできる',
     STAR: '⭐ に さわったら クリア'
   };
   const MAPCH = {
@@ -77,6 +77,7 @@ const WP = (function () {
       hasAM: allWords.includes('AM'), hasRun: allWords.includes('RUN'),
       types: [...new Set(objs.filter(o => !isText(o.t)).map(o => o.t))]
     });
+    if (!allWords.includes('AM')) objs.forEach(o => { if (o.t === (def.hero || 'BOY')) o.me = 1; });
     let st = { objs, nid };
     st = settle(L, st, {});
     L.st0 = st;
@@ -182,7 +183,8 @@ const WP = (function () {
         else if (s.verb === 'HAVE' || s.verb === 'HAS') add(R.has, sub, o);
       }
     }
-    if (!L.hasAM) R.you.add(L.hero);
+    R.amMode = !!L.hasAM;
+    R.isYou = o => !isText(o.t) && ((R.amMode && R.you.has(o.t)) || !!o.me);
     R.lock.forEach(t => delete R.xf[t]);
     // conflicts (opposites written for the same thing cancel)
     Object.keys(R.prop).forEach(t => {
@@ -190,7 +192,7 @@ const WP = (function () {
       ['BIG', 'HOT', 'OPEN'].forEach(a => { if (p.has(a) && p.has(OPP[a])) { p.delete(a); p.delete(OPP[a]); R.conflicts.push(a + ' / ' + OPP[a]); } });
     });
     const present = new Set(st.objs.filter(o => !isText(o.t)).map(o => o.t));
-    const anyYou = st.objs.some(o => R.you.has(o.t));
+    const anyYou = st.objs.some(o => R.isYou(o));
     out.sentences.forEach(s => {
       s.effect = subjTypes(s).some(t => t === '@you' ? anyYou : present.has(t)) || (s.verb === 'AM');
     });
@@ -199,9 +201,9 @@ const WP = (function () {
   }
 
   // effective properties of an object type
-  function eff(R, t) {
-    if (R.effCache[t]) return R.effCache[t];
-    const you = R.you.has(t);
+  function eff(R, t, youArg) {
+    const you = !!youArg, ck = t + (you ? '|y' : '');
+    if (R.effCache[ck]) return R.effCache[ck];
     const p = new Set(R.prop[t] || []);
     if (you && R.prop['@you']) R.prop['@you'].forEach(a => p.add(a));
     ['BIG', 'HOT', 'OPEN'].forEach(a => { if (p.has(a) && p.has(OPP[a])) { p.delete(a); p.delete(OPP[a]); } });
@@ -216,11 +218,12 @@ const WP = (function () {
     (R.can[t] || []).forEach(a => ab.add(a)); if (you && R.can['@you']) R.can['@you'].forEach(a => ab.add(a));
     (R.cant[t] || []).forEach(a => ab.delete(a)); if (you && R.cant['@you']) R.cant['@you'].forEach(a => ab.delete(a));
     const e = { p, ab, you };
-    R.effCache[t] = e; return e;
+    R.effCache[ck] = e; return e;
   }
+  const effO = (R, o) => eff(R, o.t, R.isYou(o));
 
   // ---------- turn ----------
-  function cloneState(st) { return { objs: st.objs.map(o => ({ id: o.id, t: o.t, x: o.x, y: o.y, d: o.d })), nid: st.nid }; }
+  function cloneState(st) { return { objs: st.objs.map(o => { const c = { id: o.id, t: o.t, x: o.x, y: o.y, d: o.d }; if (o.me) c.me = 1; return c; }), nid: st.nid }; }
   function move(L, st0, dir, info) {
     info = info || {}; info.events = [];
     const st = cloneState(st0);
@@ -233,11 +236,12 @@ const WP = (function () {
       const a = cell.get(key(o.x, o.y)); a.splice(a.indexOf(o), 1);
       o.x = nx; o.y = ny; const k = key(nx, ny); (cell.get(k) || cell.set(k, []).get(k)).push(o);
     };
-    const E = o => isText(o.t) ? null : eff(R, o.t);
+    const E = o => isText(o.t) ? null : effO(R, o);
     const blocks = (p, o, self) => { // does p stop o from entering?
       if (isText(p.t)) return false;
-      const P = eff(R, p.t).p; if (P.has('LOW')) return false;
+      const P = effO(R, p).p; if (P.has('LOW')) return false;
       const oe = E(o);
+      if (P.has('COLD') && oe && oe.p.has('HOT')) return false; // hot things melt their way in
       if (P.has('BIG')) return true;
       if (P.has('CLOSED')) return !(oe && oe.p.has('OPEN'));
       if (P.has('steep')) return !(oe && (oe.ab.has('CLIMB') || oe.ab.has('FLY')));
@@ -248,7 +252,7 @@ const WP = (function () {
       }
       return false;
     };
-    const pushable = p => isText(p.t) || (eff(R, p.t).p.has('SMALL') && !eff(R, p.t).p.has('LOW'));
+    const pushable = p => isText(p.t) || (effO(R, p).p.has('SMALL') && !effO(R, p).p.has('LOW'));
     // plan a move of o by (dx,dy); returns list of objects to move, or null
     function plan(o, dx, dy, self, seen) {
       const nx = o.x + dx, ny = o.y + dy;
@@ -279,7 +283,7 @@ const WP = (function () {
     const movedIds = new Set();
     if (dir) {
       const [dx, dy] = DIRV[dir];
-      const movers = st.objs.filter(o => !isText(o.t) && R.you.has(o.t) && !eff(R, o.t).p.has('SLEEPY'));
+      const movers = st.objs.filter(o => R.isYou(o) && !effO(R, o).p.has('SLEEPY'));
       movers.sort((a, b) => (b.x * dx + b.y * dy) - (a.x * dx + a.y * dy));
       movers.forEach(o => {
         o.d = dir;
@@ -294,16 +298,18 @@ const WP = (function () {
     // hungry things bite right away (so you can't slip past a runner)
     const preDead = new Set();
     st.objs.forEach(o => {
-      if (isText(o.t) || !R.you.has(o.t) || !movedIds.has(o.id)) return;
-      const eo = eff(R, o.t); if (eo.p.has('HUNGRY') || eo.ab.has('FLY')) return;
-      if ((cell.get(key(o.x, o.y)) || []).some(p => p !== o && !isText(p.t) && eff(R, p.t).p.has('HUNGRY'))) preDead.add(o);
+      if (!R.isYou(o) || !movedIds.has(o.id)) return;
+      const eo = effO(R, o); if (eo.ab.has('FLY')) return;
+      const others = (cell.get(key(o.x, o.y)) || []).filter(p => p !== o && !isText(p.t));
+      if (!eo.p.has('HUNGRY') && others.some(p => effO(R, p).p.has('HUNGRY'))) { preDead.add(o); o._why = 'eat'; }
+      else if (!eo.p.has('HOT') && others.some(p => effO(R, p).p.has('HOT'))) { preDead.add(o); o._why = 'burn'; }
     });
     if (preDead.size) {
-      preDead.forEach(o => { const a = cell.get(key(o.x, o.y)); a.splice(a.indexOf(o), 1); info.events.push({ k: 'eat', id: o.id, t: o.t, x: o.x, y: o.y, you: true }); });
+      preDead.forEach(o => { const a = cell.get(key(o.x, o.y)); a.splice(a.indexOf(o), 1); info.events.push({ k: o._why, id: o.id, t: o.t, x: o.x, y: o.y, you: true }); delete o._why; });
       st.objs = st.objs.filter(o => !preDead.has(o));
     }
     // runners
-    const runners = st.objs.filter(o => !isText(o.t) && eff(R, o.t).ab.has('RUN') && !eff(R, o.t).p.has('SLEEPY'));
+    const runners = st.objs.filter(o => !isText(o.t) && effO(R, o).ab.has('RUN') && !effO(R, o).p.has('SLEEPY'));
     runners.forEach(o => {
       for (let tries = 0; tries < 2; tries++) {
         const [dx, dy] = DIRV[o.d];
@@ -326,9 +332,9 @@ const WP = (function () {
     st.objs.forEach(o => {
       if (isText(o.t)) return;
       const to = R.xf[o.t]; if (!to || !to.size) return;
-      const list = [...to]; const from = o.t;
-      o.t = list[0];
-      for (let i = 1; i < list.length; i++) born.push({ id: st.nid++, t: list[i], x: o.x, y: o.y, d: o.d });
+      const list = [...to]; const from = o.t; const wasYou = R.isYou(o);
+      o.t = list[0]; if (wasYou) o.me = 1;
+      for (let i = 1; i < list.length; i++) { const b = { id: st.nid++, t: list[i], x: o.x, y: o.y, d: o.d }; if (wasYou) b.me = 1; born.push(b); }
       info.events.push({ k: 'xf', id: o.id, from, to: o.t });
     });
     born.forEach(b => { st.objs.push(b); info.events.push({ k: 'spawn', id: b.id }); });
@@ -340,7 +346,7 @@ const WP = (function () {
     const kill = (o, reason) => { if (!dead.has(o)) { dead.add(o); why[o.id] = reason; } };
     for (const objs of byCell.values()) {
       if (objs.length < 2) continue;
-      const e = o => eff(R, o.t);
+      const e = o => effO(R, o);
       // sink
       const deep = objs.filter(o => e(o).p.has('deep'));
       if (deep.length) {
@@ -348,7 +354,10 @@ const WP = (function () {
         if (sinkers.length) { sinkers.forEach(o => kill(o, 'sink')); kill(deep[0], 'sink'); }
       }
       // melt
-      if (objs.some(o => e(o).p.has('HOT'))) objs.forEach(o => { if (o.t !== 'RIVER' && e(o).p.has('COLD')) kill(o, 'melt'); });
+      if (objs.some(o => e(o).p.has('HOT'))) objs.forEach(o => {
+        if (o.t !== 'RIVER' && e(o).p.has('COLD')) kill(o, 'melt');
+        else if (R.isYou(o) && !e(o).p.has('HOT') && !e(o).ab.has('FLY')) kill(o, 'burn');
+      });
       // open / closed
       const op = objs.filter(o => e(o).p.has('OPEN')), sh = objs.filter(o => e(o).p.has('CLOSED'));
       if (op.length && sh.length && (op.length > 1 || sh.length > 1 || op[0] !== sh[0])) { op.forEach(o => kill(o, 'open')); sh.forEach(o => kill(o, 'open')); }
@@ -356,15 +365,15 @@ const WP = (function () {
       const hun = objs.filter(o => e(o).p.has('HUNGRY') && !dead.has(o));
       if (hun.length) objs.forEach(o => {
         if (e(o).p.has('HUNGRY') || e(o).ab.has('FLY')) return;
-        if (R.you.has(o.t) || FOOD[o.t]) kill(o, 'eat');
+        if (R.isYou(o) || FOOD[o.t]) kill(o, 'eat');
       });
     }
     if (dead.size) {
       const drops = [];
       dead.forEach(o => {
-        const hs = new Set(R.has[o.t] || []); if (R.you.has(o.t) && R.has['@you']) R.has['@you'].forEach(t => hs.add(t));
+        const hs = new Set(R.has[o.t] || []); if (R.isYou(o) && R.has['@you']) R.has['@you'].forEach(t => hs.add(t));
         hs.forEach(t => drops.push({ id: st.nid++, t, x: o.x, y: o.y, d: o.d }));
-        info.events.push({ k: why[o.id], id: o.id, t: o.t, x: o.x, y: o.y, you: R.you.has(o.t) });
+        info.events.push({ k: why[o.id], id: o.id, t: o.t, x: o.x, y: o.y, you: R.isYou(o) });
       });
       st.objs = st.objs.filter(o => !dead.has(o)).concat(drops);
       drops.forEach(b => info.events.push({ k: 'spawn', id: b.id, has: true }));
@@ -374,7 +383,7 @@ const WP = (function () {
 
   function isWin(L, st, R) {
     R = R || rulesOf(L, st);
-    const yous = st.objs.filter(o => !isText(o.t) && R.you.has(o.t));
+    const yous = st.objs.filter(o => R.isYou(o));
     for (const o of yous) {
       const want = new Set(['STAR']);
       R.wants.forEach(([who, what]) => { if (who === '@you' || who === o.t) want.add(what); });
@@ -383,10 +392,10 @@ const WP = (function () {
     }
     return false;
   }
-  const youCount = (L, st, R) => { R = R || rulesOf(L, st); return st.objs.filter(o => !isText(o.t) && R.you.has(o.t)).length; };
+  const youCount = (L, st, R) => { R = R || rulesOf(L, st); return st.objs.filter(o => R.isYou(o)).length; };
 
   function stateKey(L, st) {
-    const a = st.objs.map(o => o.t + (o.x + o.y * L.w) + (L.hasRun && !isText(o.t) ? o.d : ''));
+    const a = st.objs.map(o => o.t + (o.x + o.y * L.w) + (L.hasRun && !isText(o.t) ? o.d : '') + (o.me ? 'm' : ''));
     a.sort(); return a.join('|');
   }
 
@@ -410,6 +419,6 @@ const WP = (function () {
     return s.text;
   }
 
-  return { WORDS, MAPCH, DEFAULTS, DEF_ABIL, NATURE_JP, FOOD, OPP, isText, wordOf, parseLevel, rulesOf, eff, move, settle, isWin, youCount, stateKey, sentenceJP };
+  return { WORDS, MAPCH, DEFAULTS, DEF_ABIL, NATURE_JP, FOOD, OPP, isText, wordOf, parseLevel, rulesOf, eff, effO, move, settle, isWin, youCount, stateKey, sentenceJP };
 })();
 if (typeof module !== 'undefined') module.exports = WP;

@@ -8,7 +8,7 @@ sol = json.load(open(cache)) if os.path.exists(cache) else {}
 if sol.get('hash') != src_hash:
     print('solving all levels (takes a few minutes)...')
     res = json.loads(subprocess.check_output(['node', '--max-old-space-size=4000', '-e',
-      "const {solve}=require('./%ssolve.js');const {LEVELS}=require('./%slevels.js');console.log(JSON.stringify(LEVELS.map(d=>{const r=solve(d,{cap:3000000});return [r.moves||0,r.path||'']})))" % (d, d)]))
+      "const {solve}=require('./%ssolve.js');const {LEVELS}=require('./%slevels.js');console.log(JSON.stringify(LEVELS.map(d=>{let r=solve(d,{cap:d.solution?200000:3000000});if(!r.solved&&d.solution){const WP=require('./%sengine.js');const L=WP.parseLevel(d);let s=L.st0;for(const a of d.solution){const n=WP.move(L,s,a==='W'?null:a,{});if(n)s=n;}if(!WP.isWin(L,s))throw new Error('bad solution '+d.title);r={moves:d.solution.length,path:d.solution};}return [r.moves||0,r.path||'']})))" % (d, d, d)]))
     sol = {'hash': src_hash, 'par': [r[0] for r in res], 'paths': [r[1] for r in res]}
     json.dump(sol, open(cache, 'w'))
 t = open(d + 'template.html', encoding='utf-8').read()
