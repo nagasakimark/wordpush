@@ -142,6 +142,29 @@ button { font: inherit; cursor: pointer; border: 0; padding: 0; background: none
 .sbtn.ghost { filter: grayscale(.4) drop-shadow(0 3px 0 rgba(60,30,0,.3)); opacity: .85; }
 @media (max-height: 520px) { .say { font-size: 18px; } #tutGuide img { height: 130px; } #tutGuide { width: 150px; } }
 .toprow { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 0 0 6px; } .toprow .legend { margin: 0; } .toprow .sbtn { margin-bottom: 5px; }
+
+.t-am, .t-are, .t-have, .t-has, .t-and { background: #e3a914; }
+.chap { grid-column: 1 / -1; text-align: left; color: #fff; font-weight: 900; font-size: 17px; margin: 6px 4px -2px; text-shadow: -2px -2px 0 #1b6fb0, 2px -2px 0 #1b6fb0, -2px 2px 0 #1b6fb0, 2px 2px 0 #1b6fb0, 0 3px 0 #1b6fb0; }
+.card.sand { background: linear-gradient(#fff3fb, #ffd0ea); }
+.bookc { font-weight: 900; color: #fff; text-shadow: 0 2px 0 #1b6fb0; }
+#natPanel ul { margin: 0; padding: 0; list-style: none; font-size: 11px; font-weight: 800; line-height: 1.35; display: grid; grid-template-columns: 1fr 1fr; gap: 1px 8px; } #natPanel li::before { content: '・'; } #natPanel li.off { text-decoration: line-through; opacity: .5; }
+#toast { position: absolute; left: 50%; top: 8px; transform: translate(-50%, -30px); opacity: 0; pointer-events: none; background: linear-gradient(#fff9d6, #ffe680); border: 4px solid #9a4a00; border-radius: 16px; padding: 6px 14px; font-weight: 900; font-size: 14px; text-align: center; box-shadow: 0 5px 0 #9a4a00, 0 8px 10px rgba(0,0,0,.25); z-index: 30; }
+#toast b { display: block; color: #d4531c; font-size: 15px; } #toast .row { display: flex; gap: 4px; justify-content: center; margin: 3px 0; }
+#toast.show { animation: toastIn 3.2s ease forwards; }
+@keyframes toastIn { 0% { opacity: 0; transform: translate(-50%, -30px) scale(.8); } 8% { opacity: 1; transform: translate(-50%, 0) scale(1.06); } 12% { transform: translate(-50%, 0) scale(1); } 85% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -20px); } }
+#card, #book { position: absolute; inset: 0; z-index: 65; display: flex; align-items: center; justify-content: center; background: rgba(60,30,0,.4); padding: 10px; }
+#cardbox, #bookbox { border: 6px solid #8a4b14; border-radius: 28px; background: linear-gradient(#fffef2, #ffeeb8); box-shadow: 0 8px 0 #8a4b14, 0 14px 16px rgba(0,0,0,.3), inset 0 4px 0 rgba(255,255,255,.9); padding: 12px 22px 14px; text-align: center; animation: pop .35s cubic-bezier(.3,1.6,.5,1); }
+#cardbox { width: min(760px, 100%); display: flex; flex-direction: column; gap: 10px; align-items: center; }
+#cardbox h2, #bookbox h2 { margin: 0; font-size: 30px; color: #fff; -webkit-text-stroke: 7px #9a4a00; paint-order: stroke fill; text-shadow: 0 4px 0 #9a4a00; }
+#cardbox .say { text-align: left; width: 100%; } #cardbox .say::before { display: none; }
+#cardbox .vis { width: 100%; min-height: 110px; flex: none; }
+#bookbox { width: min(980px, 100%); max-height: 100%; display: flex; flex-direction: column; gap: 8px; }
+.bookcols { display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; min-height: 0; overflow: hidden; text-align: left; flex: 1; }
+.bookcols > div { overflow-y: auto; max-height: 420px; } #bookList { display: flex; flex-direction: column; gap: 5px; } #bookEv { font-weight: 800; font-size: 14px; line-height: 1.6; }
+.bookcols h3 { margin: 0 0 6px; color: #d4531c; }
+#winbox .wsents { max-height: 140px; overflow-y: auto; }
+#bookClose { align-self: center; }
+#toast { top: auto; bottom: 22px; }
 body.nojp .jpx { display: none; }
 </style>
 </head>
@@ -151,7 +174,7 @@ body.nojp .jpx { display: none; }
 <div id="menu">
   <div id="logo"></div>
   <p class="sub">ことばブロックを おして、ぶんを つくろう!</p>
-  <div class="toprow"><button class="sbtn blue" id="bHow" style="height:52px;font-size:18px;padding:0 14px">あそびかた を みる</button><button class="sbtn green" id="bQR" style="height:52px;font-size:18px;padding:0 14px" aria-label="スキャンして あそぼう">QRコード</button><div class="legend">
+  <div class="toprow"><button class="sbtn blue" id="bHow" style="height:52px;font-size:18px;padding:0 14px">あそびかた を みる</button><button class="sbtn steel" id="bBook" style="height:52px;font-size:18px;padding:0 14px">ぶん ずかん</button><span class="bookc"><b id="bookCount">0</b> ぶん</span><button class="sbtn green" id="bQR" style="height:52px;font-size:18px;padding:0 14px" aria-label="スキャンして あそぼう">QRコード</button><div class="legend">
     <span><b class="chip t-noun">DOG</b> なまえ</span><span><b class="chip t-can">CAN</b> つなぐ</span>
     <span><b class="chip t-verb">SWIM</b> うごき</span><span><b class="chip t-adj">OPEN</b> ようす</span>
   </div></div>
@@ -167,17 +190,17 @@ body.nojp .jpx { display: none; }
     <button class="sbtn red" id="bReset">やりなおし</button>
   </div>
   <div id="stage">
-    <div id="boardWrap"><canvas id="cv"></canvas></div>
+    <div id="boardWrap"><canvas id="cv"></canvas><div id="toast"></div></div>
     <div id="side">
       <div class="panel"><div id="hcard"><img id="hImg" alt=""><div class="t" id="hText"></div></div></div>
       <div class="panel"><h3>いま の ぶん</h3><div id="sents"></div></div>
       <div class="panel" id="msg"></div>
+      <div class="panel" id="natPanel"><h3>いつもの ルール</h3><ul id="nature"></ul></div>
       <div class="panel">
-        <div class="mini-legend"><b class="chip t-noun">なまえ</b><b class="chip t-can">つなぐ</b><b class="chip t-verb">うごき</b><b class="chip t-adj">ようす</b></div>
-        <div class="side-btns" style="margin-top:8px">
-          <button class="sbtn sm blue" id="bJp">にほんご</button><button class="sbtn sm green" id="bSnd">おと OFF</button>
+        <div class="side-btns">
+          <button class="sbtn sm" id="bWait">まつ</button><button class="sbtn sm blue" id="bJp">にほんご</button><button class="sbtn sm green" id="bSnd">おと OFF</button>
         </div>
-        <div class="keys">うごく: ↑↓←→ / WASD　もどす: Z　やりなおし: R</div>
+        <div class="keys">うごく: ↑↓←→　まつ: スペース　もどす: Z　やりなおし: R</div>
       </div>
     </div>
   </div>
@@ -185,6 +208,8 @@ body.nojp .jpx { display: none; }
     <button style="left:104px;top:52px" data-d="R" id="dR"></button><button style="left:52px;top:104px" data-d="D" id="dD"></button></div>
 </div>
 <div id="tut" class="hidden"><div id="tutbox"><div id="tutHead"><h2 id="tutT"></h2></div><div id="tutBody"><div id="tutGuide"><img id="tutImg" alt=""></div><div id="tutMain"><div class="say" id="tutSay"></div><div class="vis" id="tutVis"></div></div></div><div id="tutNav"><button class="sbtn sm red" id="tSkip">スキップ</button><div id="tutDots"></div><div style="display:flex;gap:8px"><button class="sbtn sm blue" id="tBack">◀ もどる</button><button class="sbtn green" id="tNext">つぎへ ▶</button></div></div></div></div>
+<div id="card" class="hidden"><div id="cardbox"><h2 id="cardT"></h2><div class="say" id="cardSay"></div><div class="vis" id="cardVis"></div><button class="sbtn green" id="cardOk">わかった!</button></div></div>
+<div id="book" class="hidden"><div id="bookbox"><h2>ぶん ずかん</h2><div class="bookcols"><div><h3>つくった ぶん (<span id="bookN"></span>)</h3><div id="bookList"></div></div><div><h3>ふしぎ はっけん (<span id="bookE"></span>)</h3><ul id="bookEv"></ul></div></div><button class="sbtn blue" id="bookClose">とじる</button></div></div>
 <div id="win" class="hidden"><div id="winbox"></div></div>
 
 <script>
@@ -199,18 +224,26 @@ const ATLAS = /*ATLAS*/{};
   'use strict';
   const $ = s => document.querySelector(s);
   const PARSED = LEVELS.map(WP.parseLevel);
-  const DIRS = { U: [0, -1], D: [0, 1], L: [-1, 0], R: [1, 0] };
-  const HERO_KEY = { '🧒': 'I', '👦': 'BOY', '👧': 'GIRL', '🐶': 'DOG', '🐱': 'CAT', '🐵': 'MONKEY' };
+  PARSED.forEach((l, i) => { l.id = i + 1; });
+  const isText = WP.isText, wordOf = WP.wordOf;
   const MSG = {
-    order: 'じゅんばんが ちがうよ。えいごは「だれが → どうなの」の じゅんばん!',
-    beIs: 'I / we / you の あとに IS は つかえないよ。',
-    wantS: 'WANT は I / we / you と いっしょ。he / she / なまえ の ときは WANTS だよ。',
-    wantsI: 'I / we / you の ときは WANTS じゃなくて WANT だよ。',
+    order: 'じゅんばんが ちがうよ。えいごは「だれが → どうする → なにを」の じゅんばん!',
+    beI: 'I の あとは AM だよ。(I AM ~)',
+    amNotI: 'AM は I だけ。ほかは IS (ひとつ) か ARE (ふたつ いじょう)。',
+    areOne: 'ひとつ だけ なら ARE じゃなくて IS だよ。',
+    isMany: 'AND で ふたつ いじょう なら IS じゃなくて ARE だよ。',
+    wantS: 'he / she / なまえ の ときは WANTS (s が つく!)',
+    wantsI: 'I の ときは WANTS じゃなくて WANT だよ。',
+    wantsMany: 'ふたつ いじょう (AND) の ときは WANT だよ。',
+    haveS: 'he / she / なまえ の ときは HAS だよ。',
+    hasI: 'I の ときは HAS じゃなくて HAVE だよ。',
+    hasMany: 'ふたつ いじょう (AND) の ときは HAVE だよ。',
     nosense: 'その ならびは ぶんに ならないよ。'
   };
   const FONT = '"Arial Rounded MT Bold","Hiragino Maru Gothic ProN","M PLUS Rounded 1c","Noto Sans JP","Meiryo","Trebuchet MS",system-ui,sans-serif';
-  const BLK = { pro: 'noun', noun: 'noun', can: 'gram', cant: 'gram', is: 'gram', want: 'gram', wants: 'gram', verb: 'verb', adj: 'adj' };
-  const BLKC = { noun: '#f59a2e', gram: '#e9b81c', verb: '#ee6f8c', adj: '#4fc27a' };
+  const BLK = { pro: 'noun', noun: 'noun', is: 'gram', am: 'gram', are: 'gram', can: 'gram', cant: 'gram', want: 'gram', wants: 'gram', have: 'gram', has: 'gram', and: 'gram', verb: 'verb', adj: 'adj' };
+  const CHAR = { BOY: 'I', GIRL: 'GIRL', DOG: 'DOG', CAT: 'CAT', MONKEY: 'MONKEY' };
+  const PROP_JP = { BIG: 'おおきい: とおれない', SMALL: 'ちいさい: おせる', LOW: 'ひくい: うえを とおれる', HOT: 'あつい: つめたい ものを とかす', COLD: 'つめたい: あつい ものに とける', OPEN: 'あいている: しまっている ものと きえる', CLOSED: 'しまっている: とおれない', HUNGRY: 'はらぺこ: あなたや たべものを たべる', SLEEPY: 'ねむい: うごかない' };
 
   // ---------- images ----------
   const IMG = {};
@@ -218,35 +251,32 @@ const ATLAS = /*ATLAS*/{};
     const im = new Image(); im.onload = im.onerror = res; im.src = ATLAS[k]; IMG[k] = im;
   })));
   const src = k => ATLAS[k] || '';
-
+  const heroSprite = t => (CHAR[t] || 'I') + '_idle';
 
   // ---------- practice levels (tutorial) ----------
   const PRP = [
-    { id: 'れんしゅう1', title: 'れんしゅう 1：あるこう', gp: 'うごく れんしゅう', hero: HERO.I, tip: '↑ ↓ ← → キーで あるこう。⭐ に さわったら クリア!', hint: '⭐ まで あるいていこう。', words: [], map: ['#########', '#@......#', '#.......#', '#......S#', '#########'] },
-    { id: 'れんしゅう2', title: 'れんしゅう 2：おしてみよう', gp: 'ブロックを おす', hero: HERO.I, tip: 'ブロックに ぶつかると、おせるよ。みちを あけて ⭐ へ!', hint: 'ブロックを みぎへ おして、へやの なかまで いれよう。そのあと ブロックの よこを とおるよ。', words: ['DOG'],
-      map: ['##########', '#####....#', '#@.1.....#', '#####...S#', '##########'] }
-  ];
-  PRP.forEach((d, i) => PRP[i] = WP.parseLevel(d));
+    { title: 'れんしゅう 1：あるこう', gp: 'うごく れんしゅう', hero: 'BOY', tip: '↑ ↓ ← → キーで あるこう。⭐ に さわったら クリア!', hint: '⭐ まで あるいていこう。', words: [], map: ['#########', '#B......#', '#.......#', '#......S#', '#########'] },
+    { title: 'れんしゅう 2：おしてみよう', gp: 'ブロックを おす', hero: 'BOY', tip: 'ブロックに ぶつかると、おせるよ。みちを あけて ⭐ へ!', hint: 'ブロックを みぎへ おして、へやの なかまで いれよう。', words: ['DOG'],
+      map: ['##########', '#####....#', '#B.*.....#', '#####...S#', '##########'] }
+  ].map(d => { const l = WP.parseLevel(d); l.id = 'P'; return l; });
+
   let mode = 'main';
-  let idx = 0, L, st, hist, moves, locked, soundOn = false, hintOn = false, T = 64, FW = 14, R = null, prevOk = '', prevRules = null;
-  let cleared = new Set();
-  try { cleared = new Set(JSON.parse(localStorage.getItem('wordpush_cleared') || '[]')); } catch (e) {}
+  let idx = 0, L, st, hist, moves, locked, soundOn = false, hintOn = false, T = 64, FW = 16, R = null, won = false;
+  let cleared = new Set(), found = {};
+  try { cleared = new Set(JSON.parse(localStorage.getItem('wordpush_cleared2') || '[]')); } catch (e) {}
+  try { found = JSON.parse(localStorage.getItem('wordpush_found') || '{}') || {}; } catch (e) {}
   try { if (localStorage.getItem('wordpush_nojp') === '1') document.body.classList.add('nojp'); } catch (e) {}
   try { soundOn = localStorage.getItem('wordpush_sound') === '1'; } catch (e) {}
-  const save = () => { try { localStorage.setItem('wordpush_cleared', JSON.stringify([...cleared])); } catch (e) {} };
+  const save = () => { try { localStorage.setItem('wordpush_cleared2', JSON.stringify([...cleared])); localStorage.setItem('wordpush_found', JSON.stringify(found)); } catch (e) {} };
   const chipHTML = w => '<b class="chip t-' + WP.WORDS[w].t + '">' + w + '</b>';
-  const heroKey = lv => HERO_KEY[lv.hero.emoji] || 'I';
+  const sentHTML = text => text.split(' ').map(chipHTML).join('');
   const rnd = (a, b) => a + Math.random() * (b - a);
   const hash = (x, y, n) => { let h = (x * 374761393 + y * 668265263 + n * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
 
-  // skin DOM buttons
   function skin() {
-    const rs = document.documentElement.style;
-    [['brown', 'ui_brown'], ['blue', 'ui_blue'], ['green', 'ui_green'], ['red', 'ui_red'], ['steel', 'ui_steel'], ['cream', 'ui_cream'], ['creamgrid', 'ui_creamgrid'], ['lred', 'ui_lred']]
-      .forEach(([n, k]) => rs.setProperty('--bi-' + n, 'url(' + src(k) + ')'));
     const ic = (k) => '<img class="ic" src="' + src(k) + '">';
-    const lab = { bMenu: ['i_home', 'メニュー'], bHow: ['i_info', 'あそびかた を みる'], bHow2: ['i_info', 'あそびかた'], bHint: ['i_hint', 'ヒント'], bUndo: ['i_undo', 'もどす'], bReset: ['i_restart', 'やりなおし'], bJp: ['i_info', 'にほんご'], bSnd: [soundOn ? 'i_on' : 'i_off', soundOn ? 'おと ON' : 'おと OFF'], tSkip: ['i_next', 'スキップ'], tBack: ['i_left', 'もどる'], tNext: ['i_right', 'つぎへ'] };
-    Object.keys(lab).forEach(id => { $('#' + id).innerHTML = ic(lab[id][0]) + lab[id][1]; });
+    const lab = { bMenu: ['i_home', 'メニュー'], bHow: ['i_info', 'あそびかた を みる'], bBook: ['i_check', 'ぶん ずかん'], bHow2: ['i_info', 'あそびかた'], bHint: ['i_hint', 'ヒント'], bUndo: ['i_undo', 'もどす'], bReset: ['i_restart', 'やりなおし'], bJp: ['i_info', 'にほんご'], bSnd: [soundOn ? 'i_on' : 'i_off', soundOn ? 'おと ON' : 'おと OFF'], bWait: ['i_next', 'まつ'], tSkip: ['i_next', 'スキップ'], tBack: ['i_left', 'もどる'], tNext: ['i_right', 'つぎへ'] };
+    Object.keys(lab).forEach(id => { const e = $('#' + id); if (e) e.innerHTML = ic(lab[id][0]) + lab[id][1]; });
     [['dU', 'i_up'], ['dL', 'i_left'], ['dR', 'i_right'], ['dD', 'i_down']].forEach(([id, k]) => { $('#' + id).innerHTML = ic(k); });
     const lg = $('#logo'); lg.innerHTML = '';
     const cols = ['#ff7a3c', '#ffc933', '#57c878', '#4cb8ff', '#ff7aa2'];
@@ -259,40 +289,52 @@ const ATLAS = /*ATLAS*/{};
   // ---------- menu ----------
   function buildMenu() {
     const g = $('#levelGrid'); g.innerHTML = '';
+    let ch = 0;
     PARSED.forEach((lv, i) => {
-      const b = document.createElement('button'); b.className = 'card';
-      b.innerHTML = '<span class="n">' + lv.id + '</span><img class="h" src="' + src(heroKey(lv) + '_idle') + '">' +
+      if (lv.chapter !== ch) {
+        ch = lv.chapter; const h = document.createElement('div'); h.className = 'chap';
+        h.textContent = (typeof CHAPTERS !== 'undefined' ? CHAPTERS[ch - 1] : ch); g.appendChild(h);
+      }
+      const b = document.createElement('button'); b.className = 'card' + (lv.sandbox ? ' sand' : '');
+      b.innerHTML = '<span class="n">' + lv.id + '</span><img class="h" src="' + src(heroSprite(lv.hero)) + '">' +
         '<div class="ti">' + lv.title + '</div><span class="gp">' + lv.gp + '</span>' +
-        (cleared.has(lv.id) ? '<img class="done" src="' + src('star_on') + '">' : '');
+        (cleared.has(lv.title) ? '<img class="done" src="' + src('star_on') + '">' : '');
       b.onclick = () => startLevel(i);
       g.appendChild(b);
     });
+    $('#bookCount').textContent = Object.keys(found).filter(k => k[0] !== '!').length;
   }
   function showMenu() {
-    buildMenu(); $('#game').classList.add('hidden'); $('#win').classList.add('hidden'); $('#menu').classList.remove('hidden'); L = null;
+    buildMenu(); $('#game').classList.add('hidden'); $('#win').classList.add('hidden'); $('#card').classList.add('hidden'); $('#menu').classList.remove('hidden'); L = null;
     try { history.replaceState(null, '', location.pathname); } catch (e) {}
   }
 
   // ---------- level ----------
-  let E = null; // entities for animation
+  let A = {}; // animation state by object id
+  function syncAnim(fresh) {
+    const ids = new Set();
+    st.objs.forEach(o => {
+      ids.add(o.id);
+      let a = A[o.id];
+      if (!a || fresh) A[o.id] = a = { x: o.x, y: o.y, sq: 0, pop: fresh ? 0 : .35, hop: 0, bump: 0, face: 1, t: o.t };
+      if (a.t !== o.t) { a.pop = .4; a.t = o.t; }
+    });
+    Object.keys(A).forEach(id => { if (!ids.has(+id)) delete A[id]; });
+  }
   function startLevel(i, practice) {
     mode = practice ? 'pr' : 'main'; idx = i; L = (practice ? PRP : PARSED)[i]; st = L.st0; hist = []; moves = 0; locked = false; hintOn = false; won = false;
     $('#menu').classList.add('hidden'); $('#win').classList.add('hidden'); $('#game').classList.remove('hidden');
     if (!practice) { try { history.replaceState(null, '', '#level=' + L.id); } catch (e) {} }
     $('#ttl').innerHTML = (practice ? '' : 'Level ' + L.id + '：') + L.title + '<small>' + L.gp + '</small>';
-    $('#hImg').src = src(heroKey(L) + '_idle');
-    $('#hText').innerHTML = 'あなたは <b>' + L.hero.jp + '</b><br>' + (L.goal || '⭐ に さわろう!');
-    parts.length = 0;
-    E = { blocks: L.words.map((w, k) => ({ x: st.p[2 * k], y: st.p[2 * k + 1], sq: 0, shake: 0 })), hero: { x: st.hx, y: st.hy, hop: 0, bump: 0, bdx: 0, face: 1, cheer: 0, t0: 0 } };
-    prevOk = ''; prevRules = null;
-    layout(); refresh(true);
+    $('#bWait').classList.toggle('hidden', !L.hasRun);
+    parts.length = 0; toasts.length = 0; A = {}; $('#toast').classList.remove('show');
+    syncAnim(true); layout(); refresh(true);
+    if (L.intro && INTRO[L.intro] && mode === 'main') showCard(INTRO[L.intro]);
   }
-
   function layout() {
     if (!L) return;
     const wrap = $('#boardWrap'); const aw = wrap.clientWidth - 6, ah = wrap.clientHeight - 6;
-    FW = 16;
-    T = Math.max(28, Math.min(84, Math.floor(Math.min((aw - 2 * FW) / L.w, (ah - 2 * FW) / L.h))));
+    T = Math.max(26, Math.min(84, Math.floor(Math.min((aw - 2 * FW) / L.w, (ah - 2 * FW) / L.h))));
     const cv = $('#cv'), dpr = Math.min(2, window.devicePixelRatio || 1);
     const w = T * L.w + 2 * FW, h = T * L.h + 2 * FW;
     cv.style.width = w + 'px'; cv.style.height = h + 'px'; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
@@ -300,68 +342,107 @@ const ATLAS = /*ATLAS*/{};
   }
 
   // ---------- rules → screen ----------
+  let status = {}, prevOk = new Set();
+  function youTypes() { return [...R.you].filter(t => st.objs.some(o => o.t === t)); }
   function refresh(quiet) {
-    const Rr = WP.rulesOf(L, st); R = Rr;
-    const okIds = new Set(), softIds = new Set(), badIds = new Set();
-    Rr.sentences.forEach(s => s.ids.forEach(id => (s.effect ? okIds : softIds).add(id)));
-    Rr.bad.forEach(b => b.ids.forEach(id => badIds.add(id)));
-    E.status = L.words.map((_, i) => okIds.has(i) ? 'ok' : softIds.has(i) ? 'soft' : (moves > 0 && badIds.has(i)) ? 'bad' : '');
-    const okKey = [...okIds].sort().join(',');
-    E.fly = Rr.abil.has('FLY');
-    if (!quiet && prevRules) {
-      if ([...okIds].some(id => !prevOk.split(',').includes(String(id)))) sfx('rule');
-      okIds.forEach(id => { if (!prevOk.split(',').includes(String(id))) for (let k = 0; k < 7; k++) spark(st.p[2 * id] + .5, st.p[2 * id + 1] + .5, '#fff27a'); });
-      if (Rr.door && !prevRules.door) sfx('open'); if (Rr.door && !prevRules.door) L.tiles.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'D') poof(x + .5, y + .5); }));
-      if (Rr.river && !prevRules.river) L.tiles.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'R') for (let k = 0; k < 5; k++) spark(x + .5, y + .5, '#e4f7ff'); }));
-      if (Rr.mountain && !prevRules.mountain) L.tiles.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'M') poof(x + .5, y + .5); }));
-      if (Rr.wall && !prevRules.wall) L.tiles.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'W') poof(x + .5, y + .5); }));
+    R = WP.rulesOf(L, st);
+    const ok = new Set(), soft = new Set(), bad = new Set();
+    R.sentences.forEach(s => s.ids.forEach(id => (s.effect ? ok : soft).add(id)));
+    R.bad.forEach(b => b.ids.forEach(id => bad.add(id)));
+    status = {};
+    st.objs.forEach(o => { if (isText(o.t)) status[o.id] = ok.has(o.id) ? 'ok' : soft.has(o.id) ? 'soft' : (moves > 0 && bad.has(o.id)) ? 'bad' : ''; });
+    if (!quiet) {
+      const fresh = [...ok].filter(id => !prevOk.has(id));
+      if (fresh.length) { sfx('rule'); fresh.forEach(id => { const o = st.objs.find(p => p.id === id); for (let k = 0; k < 6; k++) spark(o.x + .5, o.y + .5, '#fff27a'); }); }
     }
-    prevOk = okKey; prevRules = { door: Rr.door, river: Rr.river, mountain: Rr.mountain, wall: Rr.wall };
-
+    prevOk = ok;
+    // discoveries
+    if (mode === 'main' && moves > 0) R.sentences.forEach(s => {
+      if (!found[s.text]) { found[s.text] = WP.sentenceJP(s); save(); toast('はじめての ぶん!', s.text, WP.sentenceJP(s)); }
+    });
+    // side panel
+    const yt = youTypes();
+    $('#hImg').src = src(heroSprite(yt[0] || L.hero));
+    $('#hImg').style.visibility = yt.length ? 'visible' : 'hidden';
+    $('#hText').innerHTML = yt.length ? 'あなたは <b>' + yt.map(t => t + ' (' + WP.WORDS[t].jp + ')' + (st.objs.filter(o => o.t === t).length > 1 ? ' ×' + st.objs.filter(o => o.t === t).length : '')).join(' と ') + '</b>'
+      : '<b style="color:#c4271e">だれも いない!</b><br>もどす(Z) で もどろう';
     const box = $('#sents');
-    if (!Rr.sentences.length) box.innerHTML = '<div class="none">ブロックを ならべて ぶんを つくろう</div>';
-    else box.innerHTML = Rr.sentences.map(s => {
-      const note = s.effect ? '✓ はたらいている!' : s.kind === 'is' ? '○ ぶんは OK。でも なにも おこらない' : '○ ぶんは OK。でも あなたの ことじゃないよ';
-      return '<div class="sent ' + (s.effect ? 'ok' : '') + '"><div class="row">' + s.text.split(' ').map(chipHTML).join('') + '</div>' +
+    if (!R.sentences.length) box.innerHTML = '<div class="none">ブロックを ならべて ぶんを つくろう</div>';
+    else box.innerHTML = R.sentences.map(s => {
+      const note = s.effect ? '✓ はたらいている!' : '○ ぶんは OK。でも ここに いないよ';
+      return '<div class="sent ' + (s.effect ? 'ok' : '') + '"><div class="row">' + sentHTML(s.text) + '</div>' +
         '<div class="jp">' + WP.sentenceJP(s) + '</div><div class="note">' + note + '</div></div>';
     }).join('');
+    // nature rules for things on the board
+    const types = [...new Set(st.objs.filter(o => !isText(o.t)).map(o => o.t))];
+    const nat = types.filter(t => WP.NATURE_JP[t]).map(t => {
+      const e = WP.eff(R, t); const def = (WP.DEFAULTS[t] || []).concat(WP.DEF_ABIL[t] || []);
+      const off = def.length && def.every(d => !(e.p.has(d) || e.ab.has(d)));
+      return '<li class="' + (off ? 'off' : '') + '">' + WP.NATURE_JP[t] + '</li>';
+    });
+    $('#nature').innerHTML = nat.join('');
+    $('#natPanel').classList.toggle('hidden', !nat.length);
     const m = $('#msg'); m.className = 'panel';
-    if (Rr.conflicts.length) { m.classList.add('warn'); m.textContent = '⚠ はんたいの ことばが ぶつかって いるよ! (' + Rr.conflicts.join(', ') + ')'; }
-    else if (Rr.bad.length && moves > 0) { m.classList.add('warn'); m.textContent = '✗ ' + Rr.bad[0].text + '：' + MSG[Rr.bad[0].code]; }
+    if (!yt.length && moves > 0) { m.classList.add('warn'); m.textContent = 'だれも うごかせない! もどす (Z) か やりなおし (R) で もどろう。'; }
+    else if (R.conflicts.length) { m.classList.add('warn'); m.textContent = '⚠ はんたいの ことばが ぶつかって、きえちゃった! (' + R.conflicts.join(', ') + ')'; }
+    else if (R.bad.length && moves > 0) { m.classList.add('warn'); m.innerHTML = '✗ ' + sentHTML(R.bad[0].text) + '<br>' + MSG[R.bad[0].code]; }
     else if (hintOn) { m.classList.add('hint'); m.textContent = '💡 ' + L.hint; }
     else m.textContent = L.tip;
   }
 
   // ---------- input ----------
   function go(dir) {
-    if (locked || !L) return;
-    const [dx, dy] = DIRS[dir]; const info = {}; const h = E.hero;
-    if (dx) h.face = dx;
-    const ns = WP.move(L, st, dx, dy, info);
-    if (!ns) { h.bump = .35; h.bdx = dx; h.bdy = dy; sfx('bump'); return; }
-    hist.push(st); const old = st; st = ns; moves++;
-    h.hop = .26; h.hopBig = !!info.hop;
-    sfx(info.pushed ? 'push' : 'step');
-    if (info.pushed) {
-      L.words.forEach((_, k) => { if (st.p[2 * k] !== old.p[2 * k] || st.p[2 * k + 1] !== old.p[2 * k + 1]) { E.blocks[k].sq = .25; dust(st.p[2 * k] + .5 - dx * .4, st.p[2 * k + 1] + .5 - dy * .4); } });
+    if (locked || !L || !$('#card').classList.contains('hidden')) return;
+    if (dir === 'W' && !L.hasRun) return;
+    const info = {};
+    const prevYou = st.objs.filter(o => R.you.has(o.t));
+    const ns = WP.move(L, st, dir === 'W' ? null : dir, info);
+    if (!ns) {
+      prevYou.forEach(o => { const a = A[o.id]; if (a) { a.bump = .35; a.bdx = (WP && { L: -1, R: 1 }[dir]) || 0; if (dir === 'L' || dir === 'R') a.face = dir === 'L' ? -1 : 1; } });
+      sfx('bump'); return;
     }
-    const t = L.tiles[st.hy][st.hx];
-    if (t === 'R' && !(R && R.river)) { for (let k = 0; k < 8; k++) splash(st.hx + .5, st.hy + .5); }
+    hist.push(st); st = ns; moves++;
+    prevYou.forEach(o => { const a = A[o.id]; if (a && (dir === 'L' || dir === 'R')) a.face = dir === 'L' ? -1 : 1; });
+    (info.moved || new Set()).forEach(id => { const a = A[id]; if (a) a.hop = .24; });
+    let snd = 'step';
+    info.events.forEach(ev => {
+      if (ev.k === 'push') { snd = 'push'; ev.ids.forEach(id => { const a = A[id]; if (a) a.sq = .25; const o = st.objs.find(p => p.id === id); if (o) dust(o.x + .5, o.y + .5); }); }
+      else if (ev.k === 'hop') { const a = A[ev.id]; if (a) { a.hop = .32; a.big = 1; } }
+      else if (ev.k === 'xf') { const o = st.objs.find(p => p.id === ev.id); if (o) poof(o.x + .5, o.y + .5); discover('xf:' + ev.from + '>' + ev.to, 'へんしん!', ev.from + ' → ' + ev.to, WP.WORDS[ev.from].jp + 'が ' + WP.WORDS[ev.to].jp + 'に なった!'); }
+      else if (ev.k === 'spawn') { const o = st.objs.find(p => p.id === ev.id); if (o) { for (let k = 0; k < 8; k++) spark(o.x + .5, o.y + .5, '#fff27a'); if (ev.has) discover('has:' + o.t, 'でてきた!', o.t, WP.WORDS[o.t].jp + 'が でてきた!'); } }
+      else if (ev.k === 'sink') { for (let k = 0; k < 14; k++) splash(ev.x + .5, ev.y + .5); snd = 'push'; if (ev.you) discover('!sink', 'ぶくぶく…', ev.t, 'しずんじゃった!'); }
+      else if (ev.k === 'melt') { steam(ev.x + .5, ev.y + .5); discover('!melt:' + ev.t, 'とけた!', ev.t, WP.WORDS[ev.t].jp + 'が とけちゃった!'); }
+      else if (ev.k === 'open') { poof(ev.x + .5, ev.y + .5); snd = 'open'; }
+      else if (ev.k === 'eat') { chomp(ev.x + .5, ev.y + .5); if (ev.you) discover('!eaten', 'ぱくっ!', ev.t, 'たべられちゃった!'); else discover('!ate:' + ev.t, 'ぱくっ!', ev.t, WP.WORDS[ev.t].jp + 'を たべた!'); }
+    });
+    syncAnim(false);
+    sfx(snd);
+    const oldYou = new Set(prevYou.map(o => o.t));
     refresh();
-    if (WP.isWin(L, st)) win();
+    const yt = youTypes();
+    yt.forEach(t => { if (!oldYou.has(t)) { const o = st.objs.find(p => p.t === t); if (o) poof(o.x + .5, o.y + .5); discover('you:' + t, 'あなたは ' + t + '!', 'I AM ' + t, 'わたしは ' + WP.WORDS[t].jp + '!'); } });
+    if (WP.isWin(L, st, R)) win();
   }
-  function undo() { if (locked || !hist.length) return; st = hist.pop(); moves = Math.max(0, moves - 1); refresh(true); sfx('back'); }
-  function restart() { if (!L) return; st = L.st0; hist = []; moves = 0; locked = false; hintOn = false; won = false; $('#win').classList.add('hidden'); E.hero.cheer = 0; E.hero.x = st.hx; E.hero.y = st.hy; refresh(true); }
+  function discover(key, head, en, jp) {
+    if (mode !== 'main') { return; }
+    if (!found[key]) { found[key] = jp; save(); toast('ふしぎ はっけん! ' + head, null, jp); }
+  }
+  function undo() { if (locked || !hist.length) return; st = hist.pop(); moves = Math.max(0, moves - 1); syncAnim(false); refresh(true); sfx('back'); }
+  function restart() { if (!L) return; st = L.st0; hist = []; moves = 0; locked = false; hintOn = false; won = false; $('#win').classList.add('hidden'); A = {}; syncAnim(true); refresh(true); }
 
-  let won = false;
   function win() {
-    locked = true; won = true; if (mode === 'main') { cleared.add(L.id); save(); } sfx('win'); E.hero.cheer = 1;
-    for (let k = 0; k < 40; k++) confettiP(st.hx + .5, st.hy + .3);
+    locked = true; won = true; if (mode === 'main') { cleared.add(L.title); save(); } sfx('win');
+    const yous = st.objs.filter(o => R.you.has(o.t));
+    yous.forEach(o => { const a = A[o.id]; if (a) a.cheer = 1; for (let k = 0; k < 30; k++) confettiP(o.x + .5, o.y + .3); });
+    const self = yous.find(o => R.wants.some(([w, x]) => (w === '@you' || w === o.t) && x === o.t) || o.t === 'STAR');
+    if (self) discover('!self', 'じぶんが ほしい!', '', 'ほしい ものが じぶん だった!');
+    const who = (yous[0] && yous[0].t) || L.hero;
+    const pic = src((CHAR[who] || 'I') + '_cheer') || src(heroSprite(who));
     if (mode === 'pr') {
       const lastP = idx >= PRP.length - 1;
       setTimeout(() => {
         if (!won) return;
-        $('#winbox').innerHTML = '<h2>できた!</h2><img class="hero" src="' + src(heroKey(L) + '_cheer') + '">' +
+        $('#winbox').innerHTML = '<h2>できた!</h2><img class="hero" src="' + pic + '">' +
           '<div class="stat" style="font-size:19px;margin:8px 0 12px">' + (lastP ? 'すごい! じゃあ、ほんばんに いこう!' : 'いいね! つぎの れんしゅうへ!') + '</div>' +
           '<div class="btns"><button class="sbtn blue" id="wMenu">メニュー</button><button class="sbtn red" id="wAgain">もういちど</button><button class="sbtn green" id="wNext">' + (lastP ? 'Level 1 へ ▶' : 'つぎへ ▶') + '</button></div>';
         $('#win').classList.remove('hidden');
@@ -372,131 +453,136 @@ const ATLAS = /*ATLAS*/{};
     }
     const par = PAR[idx] || moves;
     const stars = moves <= par * 1.4 ? 3 : moves <= par * 2.5 ? 2 : 1;
-    const Rr = WP.rulesOf(L, st);
-    const sents = Rr.sentences.filter(s => s.effect).map(s =>
-      '<div class="sent ok"><div class="row">' + s.text.split(' ').map(chipHTML).join('') + '</div><div class="jp">' + WP.sentenceJP(s) + '</div></div>').join('');
+    const sents = R.sentences.filter(s => s.effect).map(s =>
+      '<div class="sent ok"><div class="row">' + sentHTML(s.text) + '</div><div class="jp">' + WP.sentenceJP(s) + '</div></div>').join('');
     const last = idx >= PARSED.length - 1;
     setTimeout(() => {
       if (!won) return;
-      $('#winbox').innerHTML = '<h2>できた!</h2><img class="hero" src="' + src(heroKey(L) + '_cheer') + '">' +
+      $('#winbox').innerHTML = '<h2>できた!</h2><img class="hero" src="' + pic + '">' +
         '<div class="stars">' + [0, 1, 2].map(i => '<img src="' + src(i < stars ? 'star_on' : 'star_off') + '">').join('') + '</div>' +
-        '<div class="stat">' + moves + ' て (ベスト ' + par + ' て)</div>' + sents +
+        '<div class="stat">' + moves + ' て (ベスト ' + par + ' て)　ほかの やりかたも あるかも!</div><div class="wsents">' + sents + '</div>' +
         '<div class="btns"><button class="sbtn blue" id="wMenu">メニュー</button><button class="sbtn red" id="wAgain">もういちど</button>' +
         (last ? '' : '<button class="sbtn green" id="wNext">つぎへ ▶</button>') + '</div>';
-      ['wMenu', 'blue', 'wAgain', 'red', 'wNext', 'green'].forEach((v, i, a) => { });
       $('#win').classList.remove('hidden');
       $('#wMenu').onclick = showMenu; $('#wAgain').onclick = restart;
       if (!last) $('#wNext').onclick = () => startLevel(idx + 1);
-    }, 900);
+    }, 1000);
   }
 
-  // ---------- particles ----------
-  const parts = [];
+  // ---------- new word cards ----------
+  const tbH = w => { const c = BLK[WP.WORDS[w].t]; return '<span class="tb"><img src="' + src('blk_' + c) + '"><b>' + w + '</b></span>'; };
+  const rowH = ws => '<div class="row">' + ws.map(tbH).join('') + '</div>';
+  const imH = k => '<img class="s" src="' + src(k) + '">';
+  const INTRO = {
+    AM: { t: 'あたらしい ことば: AM', say: 'I AM DOG =「わたしは イヌ」。<br>イヌが あなたに なって、うごかせるよ!', small: 'I の あとは いつも AM。イヌが たくさん いたら、ぜんぶ いっしょに うごく!', vis: () => imH('I_idle') + '<span class="arrow">▶</span>' + rowH(['I', 'AM', 'DOG']) + '<span class="arrow">▶</span>' + imH('DOG_cheer') },
+    ISNOUN: { t: 'IS + なまえ = へんしん!', say: 'WALL IS STAR =「かべが ほしに なる!」', small: 'なまえ IS なまえ で、ものが ほかの ものに かわるよ。DOG IS DOG なら、かわらない。', vis: () => imH('wall') + '<span class="arrow">▶</span>' + rowH(['WALL', 'IS', 'STAR']) + '<span class="arrow">▶</span>' + imH('star') },
+    HUNGRY: { t: 'あたらしい ことば: HUNGRY', say: 'HUNGRY =「はらぺこ」。<br>はらぺこの ものに さわると、たべられちゃう!', small: 'たべものも たべちゃうよ。とんでいる (FLY) ものは たべられない。', vis: () => rowH(['DOG', 'IS', 'HUNGRY']) + '<span class="arrow">▶</span>' + imH('DOG_bump') },
+    HAS: { t: 'あたらしい ことば: HAS / HAVE', say: 'ICE HAS STAR =「こおりは ほしを もっている」。<br>こおりが きえると、ほしが でてくる!', small: 'he / she / なまえ は HAS。I は HAVE (I HAVE KEY)。', vis: () => rowH(['ICE', 'HAS', 'STAR']) + '<span class="arrow">▶</span>' + imH('star') },
+    ARE: { t: 'AND と ARE', say: 'WALL AND TREE ARE SMALL =「かべと きは ちいさい」', small: 'AND で ふたつ いじょう なら IS じゃなくて ARE!', vis: () => rowH(['WALL', 'AND', 'TREE', 'ARE', 'SMALL']) },
+    CAN: { t: 'CAN = できる', say: 'I CAN SWIM =「わたしは およげる」', small: "CAN'T は「できない」。CAN と CAN'T なら CAN'T の かち。", vis: () => rowH(['I', 'CAN', 'SWIM']) + '<span class="arrow">▶</span>' + imH('I_swim') },
+    WANT: { t: 'WANT = ほしい', say: 'I WANT APPLE =「わたしは リンゴが ほしい」。<br>ほしい ものに さわると クリア!', small: 'he / she / なまえ の ときは WANTS。', vis: () => rowH(['I', 'WANT', 'APPLE']) + '<span class="arrow">▶</span>' + imH('apple') },
+    RUN: { t: 'CAN RUN = はしる', say: 'DOG CAN RUN で、イヌは まいかい 1マス はしるよ。', small: 'ぶつかると はんたいに はしる。スペースキー か「まつ」ボタンで 1かい まてる。', vis: () => rowH(['DOG', 'CAN', 'RUN']) + '<span class="arrow">▶</span>' + imH('DOG_hop') }
+  };
+  function showCard(c) {
+    $('#cardT').textContent = c.t; $('#cardSay').innerHTML = c.say + '<small>' + c.small + '</small>'; $('#cardVis').innerHTML = c.vis();
+    $('#card').classList.remove('hidden');
+  }
+  $('#cardOk').onclick = () => $('#card').classList.add('hidden');
+
+  // ---------- book ----------
+  function showBook() {
+    const ks = Object.keys(found);
+    const s = ks.filter(k => k[0] !== '!' && !k.includes(':')), ev = ks.filter(k => k[0] === '!' || k.includes(':'));
+    $('#bookList').innerHTML = (s.length ? s.sort().map(k => '<div class="sent ok"><div class="row">' + sentHTML(k) + '</div><div class="jp">' + found[k] + '</div></div>').join('') : '<div class="none">まだ ないよ。ぶんを つくって みよう!</div>');
+    $('#bookEv').innerHTML = ev.map(k => '<li>' + found[k] + '</li>').join('') || '<li class="none">まだ ないよ</li>';
+    $('#bookN').textContent = s.length; $('#bookE').textContent = ev.length;
+    $('#book').classList.remove('hidden');
+  }
+  $('#bBook').onclick = showBook; $('#bookClose').onclick = () => $('#book').classList.add('hidden');
+
+  // ---------- particles + toasts ----------
+  const parts = [], toasts = [];
   function P(o) { parts.push(Object.assign({ x: 0, y: 0, vx: 0, vy: 0, g: 0, life: .6, max: .6, size: 6, kind: 'dot', color: '#fff', rot: 0, vr: 0 }, o)); }
   function dust(x, y) { for (let i = 0; i < 4; i++) P({ x, y: y + .25, vx: rnd(-.8, .8), vy: rnd(-.8, -.1), life: rnd(.3, .5), max: .5, size: rnd(.04, .08), color: 'rgba(255,255,255,.8)', kind: 'puff' }); }
-  function splash(x, y) { P({ x: x + rnd(-.2, .2), y: y + .1, vx: rnd(-1.2, 1.2), vy: rnd(-3.4, -1.6), g: 9, life: rnd(.45, .7), max: .7, size: rnd(.06, .11), color: '#bff1ff', kind: 'drop' }); }
+  function splash(x, y) { P({ x: x + rnd(-.2, .2), y: y + .1, vx: rnd(-1.4, 1.4), vy: rnd(-3.8, -1.6), g: 9, life: rnd(.45, .8), max: .8, size: rnd(.06, .11), color: '#bff1ff', kind: 'drop' }); }
   function spark(x, y, c) { P({ x: x + rnd(-.45, .45), y: y + rnd(-.45, .45), vx: rnd(-.6, .6), vy: rnd(-1.2, -.2), life: rnd(.5, .9), max: .9, size: rnd(.1, .22), color: c || '#fff27a', kind: 'spark', vr: rnd(-4, 4) }); }
-  function poof(x, y) { for (let i = 0; i < 9; i++) { const a = Math.PI * 2 * i / 9; P({ x, y, vx: Math.cos(a) * rnd(.8, 1.6), vy: Math.sin(a) * rnd(.8, 1.6), life: rnd(.4, .6), max: .6, size: rnd(.07, .13), color: 'rgba(255,255,255,.9)', kind: 'puff' }); } for (let k = 0; k < 6; k++) spark(x, y); }
+  function poof(x, y) { for (let i = 0; i < 10; i++) { const a = Math.PI * 2 * i / 10; P({ x, y, vx: Math.cos(a) * rnd(.8, 1.6), vy: Math.sin(a) * rnd(.8, 1.6), life: rnd(.4, .6), max: .6, size: rnd(.08, .14), color: 'rgba(255,255,255,.95)', kind: 'puff' }); } for (let k = 0; k < 6; k++) spark(x, y); }
+  function steam(x, y) { for (let i = 0; i < 12; i++) P({ x: x + rnd(-.3, .3), y: y + rnd(-.1, .3), vx: rnd(-.3, .3), vy: rnd(-1.6, -.6), life: rnd(.6, 1.1), max: 1.1, size: rnd(.08, .16), color: 'rgba(235,245,255,.85)', kind: 'puff' }); }
+  function chomp(x, y) { P({ x, y: y - .2, vy: -.6, life: 1, max: 1, size: .3, kind: 'text', text: 'ぱくっ!', color: '#e2494b' }); for (let k = 0; k < 6; k++) P({ x, y, vx: rnd(-1.5, 1.5), vy: rnd(-2, -.5), g: 6, life: .6, max: .6, size: rnd(.05, .09), color: '#ffd6a0', kind: 'drop' }); }
   function confettiP(x, y) { P({ x, y, vx: rnd(-4, 4), vy: rnd(-7, -2), g: 9, life: rnd(1.4, 2.4), max: 2.4, size: rnd(.14, .24), color: ['#ff7a3c', '#ffc933', '#57c878', '#4cb8ff', '#ff7aa2'][Math.random() * 5 | 0], kind: Math.random() < .35 ? 'star' : 'conf', rot: rnd(0, 6), vr: rnd(-8, 8) }); }
+  function toast(head, en, jp) {
+    toasts.push({ head, en, jp, life: 3.2 }); if (toasts.length > 3) toasts.shift();
+    const el = $('#toast'); el.innerHTML = '<b>' + head + '</b>' + (en ? '<div class="row">' + sentHTML(en) + '</div>' : '') + '<div>' + jp + '</div>';
+    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); sfx('rule');
+  }
 
   // ---------- drawing ----------
   const cv = $('#cv'), ctx = cv.getContext('2d');
-  function drawImg(k, cx, by, w, alpha) { // centered on cx, bottom at by, width w
-    const im = IMG[k]; if (!im || !im.naturalWidth) return;
-    const h = w * im.naturalHeight / im.naturalWidth; if (alpha != null) ctx.globalAlpha = alpha;
-    ctx.drawImage(im, cx - w / 2, by - h, w, h); ctx.globalAlpha = 1; return h;
-  }
+  function drawImg(k, cx, by, w, alpha) { const im = IMG[k]; if (!im || !im.naturalWidth) return 0; const h = w * im.naturalHeight / im.naturalWidth; if (alpha != null) ctx.globalAlpha = alpha; ctx.drawImage(im, cx - w / 2, by - h, w, h); ctx.globalAlpha = 1; return h; }
+  function fitImg(k, cx, by, maxW, maxH) { const im = IMG[k]; if (!im || !im.naturalWidth) return 0; const s = Math.min(maxW / im.naturalWidth, maxH / im.naturalHeight); const w = im.naturalWidth * s, h = im.naturalHeight * s; ctx.drawImage(im, cx - w / 2, by - h, w, h); return h; }
   function drawTile(k, x, y, s, alpha) { const im = IMG[k]; if (!im || !im.naturalWidth) return; if (alpha != null) ctx.globalAlpha = alpha; ctx.drawImage(im, x, y, s, s); ctx.globalAlpha = 1; }
   function shadow(cx, cy, rx, a) { ctx.fillStyle = 'rgba(40,20,0,' + (a || .25) + ')'; ctx.beginPath(); ctx.ellipse(cx, cy, rx, rx * .32, 0, 0, 7); ctx.fill(); }
-  function nine(k, x, y, w, h, b, sb) {
-    const im = IMG[k]; if (!im || !im.naturalWidth) return; const W = im.naturalWidth, H = im.naturalHeight;
-    const s = (sx, sy, sw, sh, dx, dy, dw, dh) => ctx.drawImage(im, sx, sy, sw, sh, dx, dy, dw, dh);
-    s(0, 0, sb, sb, x, y, b, b); s(W - sb, 0, sb, sb, x + w - b, y, b, b); s(0, H - sb, sb, sb, x, y + h - b, b, b); s(W - sb, H - sb, sb, sb, x + w - b, y + h - b, b, b);
-    s(sb, 0, W - 2 * sb, sb, x + b, y, w - 2 * b, b); s(sb, H - sb, W - 2 * sb, sb, x + b, y + h - b, w - 2 * b, b);
-    s(0, sb, sb, H - 2 * sb, x, y + b, b, h - 2 * b); s(W - sb, sb, sb, H - 2 * sb, x + w - b, y + b, b, h - 2 * b);
-  }
-
   function fitText(txt, maxW, size, weight) { ctx.font = weight + ' ' + size + 'px ' + FONT; let w = ctx.measureText(txt).width; if (w > maxW) { size = size * maxW / w; ctx.font = weight + ' ' + size + 'px ' + FONT; } return size; }
 
-  function terrainAt(x, y) { return L.tiles[y][x]; }
-  function passInfo(ch) {
-    if (!R) return { pass: false, can: false };
-    const fly = R.abil.has('FLY');
-    if (ch === 'D') return { pass: R.door, can: false };
-    if (ch === 'R') return { pass: R.river, can: !R.river && (fly || R.abil.has('SWIM')) };
-    if (ch === 'M') return { pass: R.mountain, can: !R.mountain && (fly || R.abil.has('CLIMB')) };
-    if (ch === 'W') return { pass: R.wall, can: !R.wall && (fly || R.abil.has('JUMP')) };
-    return { pass: false, can: false };
+  // placeholder art drawn in code
+  function drawTree(cx, by, s) {
+    ctx.fillStyle = '#8a5a2b'; ctx.strokeStyle = '#4a2a10'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(cx - s * .09, by - s * .42, s * .18, s * .42, 3); ctx.fill(); ctx.stroke();
+    const blobs = [[0, -.62, .3], [-.22, -.5, .22], [.22, -.5, .22], [0, -.82, .2]];
+    blobs.forEach(([dx, dy, r]) => { ctx.beginPath(); ctx.arc(cx + dx * s, by + dy * s, r * s, 0, 7); ctx.fillStyle = '#2f9a3c'; ctx.fill(); ctx.strokeStyle = '#1b5c22'; ctx.stroke(); });
+    blobs.forEach(([dx, dy, r]) => { ctx.beginPath(); ctx.arc(cx + dx * s - r * s * .25, by + dy * s - r * s * .3, r * s * .45, 0, 7); ctx.fillStyle = 'rgba(160,230,120,.55)'; ctx.fill(); });
+  }
+  function drawIce(cx, by, s) {
+    const w = s * .8, h = s * .74, x = cx - w / 2, y = by - h;
+    const g = ctx.createLinearGradient(x, y, x + w, y + h); g.addColorStop(0, '#f2fdff'); g.addColorStop(1, '#8fd8f5');
+    ctx.fillStyle = g; ctx.strokeStyle = '#3a8fb8'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.roundRect(x, y, w, h, s * .12); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x + w * .2, y + h * .25); ctx.lineTo(x + w * .45, y + h * .25); ctx.moveTo(x + w * .2, y + h * .25); ctx.lineTo(x + w * .2, y + h * .5); ctx.stroke();
+  }
+  function drawFlower(cx, by, s, time) {
+    ctx.strokeStyle = '#2f8a3c'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx, by); ctx.quadraticCurveTo(cx + s * .06, by - s * .2, cx, by - s * .38); ctx.stroke();
+    const fy = by - s * .5, sw = Math.sin(time * 2 + cx) * .08;
+    ctx.save(); ctx.translate(cx, fy); ctx.rotate(sw);
+    for (let i = 0; i < 6; i++) { ctx.rotate(Math.PI / 3); ctx.beginPath(); ctx.ellipse(0, -s * .13, s * .08, s * .13, 0, 0, 7); ctx.fillStyle = '#ff7aa2'; ctx.fill(); ctx.strokeStyle = '#b8325a'; ctx.lineWidth = 1.5; ctx.stroke(); }
+    ctx.beginPath(); ctx.arc(0, 0, s * .08, 0, 7); ctx.fillStyle = '#ffd23f'; ctx.fill(); ctx.stroke(); ctx.restore();
   }
 
+  function isRiver(o) { return o.t === 'RIVER'; }
   function drawBoard(time, dt) {
     const w = T * L.w + 2 * FW, h = T * L.h + 2 * FW;
     ctx.clearRect(0, 0, w, h);
-    // frame backing + shadow
     ctx.save(); ctx.shadowColor = 'rgba(50,25,0,.45)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 8; ctx.fillStyle = '#3d8f3f'; ctx.fillRect(FW - 2, FW - 2, T * L.w + 4, T * L.h + 4); ctx.restore();
-    ctx.fillStyle = '#3d8f3f'; ctx.fillRect(FW, FW, T * L.w, T * L.h);
     ctx.save(); ctx.translate(FW, FW);
     const S = T + 1;
-    // floor
     for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) {
-      const ch = terrainAt(x, y);
-      if (ch === '#') continue;
-      if (ch === 'R') {
-        const pi = passInfo('R');
-        drawTile('water', x * T, y * T, S);
-        ctx.save(); ctx.beginPath(); ctx.rect(x * T, y * T, T, T); ctx.clip();
-        if (pi.pass) {
-          ctx.fillStyle = 'rgba(228,247,255,.86)'; ctx.fillRect(x * T, y * T, T, T);
-          ctx.strokeStyle = 'rgba(120,180,215,.7)'; ctx.lineWidth = 2; ctx.beginPath();
-          const cx0 = x * T + T * (.3 + hash(x, y, 8) * .4), cy0 = y * T + T * (.3 + hash(x, y, 9) * .4);
-          ctx.moveTo(cx0, cy0); ctx.lineTo(cx0 + T * .25, cy0 + T * .2); ctx.lineTo(cx0 + T * .15, cy0 + T * .42); ctx.moveTo(cx0, cy0); ctx.lineTo(cx0 - T * .28, cy0 - T * .12); ctx.stroke();
-          const a = .5 + .5 * Math.sin(time * 3 + x + y); ctx.globalAlpha = a; ctx.fillStyle = '#fff'; ctx.fillRect(x * T + T * .68, y * T + T * .2, 4, 4); ctx.globalAlpha = 1;
-        } else {
-          ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2.5;
-          for (let k = 0; k < 2; k++) { ctx.beginPath(); const yy = y * T + T * (.3 + .38 * k); for (let px = 0; px <= T; px += 4) { const v = yy + Math.sin(px / T * 6.28 + time * 2.2 + x + k * 2) * T * .04; if (px) ctx.lineTo(x * T + px, v); else ctx.moveTo(x * T + px, v); } ctx.stroke(); }
-        }
-        ctx.restore();
-        continue;
+      if (L.frame[y * L.w + x]) continue;
+      const r = hash(x, y, 4); drawTile(r < .5 ? 'grass0' : r < .75 ? 'grass1' : r < .9 ? 'grass2' : 'grass3', x * T, y * T, S);
+    }
+    // rivers are ground-level
+    st.objs.forEach(o => {
+      if (!isRiver(o)) return;
+      const a = A[o.id] || o, x = a.x * T, y = a.y * T, e = WP.eff(R, 'RIVER');
+      const frozen = !e.p.has('deep') && R.prop.RIVER && R.prop.RIVER.has('COLD');
+      const shallow = R.prop.RIVER && R.prop.RIVER.has('LOW');
+      drawTile('water', x, y, S, shallow ? .55 : 1);
+      ctx.save(); ctx.beginPath(); ctx.rect(x, y, T, T); ctx.clip();
+      if (frozen) {
+        ctx.fillStyle = 'rgba(228,247,255,.86)'; ctx.fillRect(x, y, T, T);
+        ctx.strokeStyle = 'rgba(120,180,215,.7)'; ctx.lineWidth = 2; ctx.beginPath();
+        const cx0 = x + T * (.3 + hash(o.x, o.y, 8) * .4), cy0 = y + T * (.3 + hash(o.x, o.y, 9) * .4);
+        ctx.moveTo(cx0, cy0); ctx.lineTo(cx0 + T * .25, cy0 + T * .2); ctx.lineTo(cx0 + T * .15, cy0 + T * .42); ctx.moveTo(cx0, cy0); ctx.lineTo(cx0 - T * .28, cy0 - T * .12); ctx.stroke();
+      } else {
+        ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2.5;
+        for (let k = 0; k < 2; k++) { ctx.beginPath(); const yy = y + T * (.3 + .38 * k); for (let px = 0; px <= T; px += 4) { const v = yy + Math.sin(px / T * 6.28 + time * 2.2 + o.x + k * 2) * T * .04; if (px) ctx.lineTo(x + px, v); else ctx.moveTo(x + px, v); } ctx.stroke(); }
       }
-      const r = hash(x, y, 4); const g = r < .5 ? 'grass0' : r < .75 ? 'grass1' : r < .9 ? 'grass2' : 'grass3';
-      drawTile(g, x * T, y * T, S);
-    }
-    // bushes
-    for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) if (terrainAt(x, y) === '#') drawTile('bush' + ((hash(x, y, 5) * 4) | 0), x * T - 1, y * T - 1, S + 2);
-    // ability hint rings
-    for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) {
-      const ch = terrainAt(x, y); const pi = passInfo(ch);
-      if (pi.can) { const a = .35 + .25 * Math.sin(time * 4); ctx.strokeStyle = 'rgba(255,255,140,' + a + ')'; ctx.lineWidth = 3; ctx.setLineDash([6, 5]); ctx.lineDashOffset = -time * 14; ctx.strokeRect(x * T + 4, y * T + 4, T - 8, T - 8); ctx.setLineDash([]); }
-    }
-    // static objects sorted by row, then dynamic
+      ctx.restore();
+    });
+    for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) if (L.frame[y * L.w + x]) drawTile('bush' + ((hash(x, y, 5) * 4) | 0), x * T - 1, y * T - 1, S + 2);
+
     const drawList = [];
-    for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) {
-      const ch = terrainAt(x, y); const pi = passInfo(ch);
-      if (ch === 'M') drawList.push({ y: y + .5, f: () => drawTile(pi.pass ? 'hill' : 'mountain', x * T, y * T, S) });
-      else if (ch === 'W') drawList.push({ y: y + .5, f: () => drawTile(pi.pass ? 'lowwall' : 'wall', x * T, y * T, S) });
-      else if (ch === 'D') drawList.push({ y: y + .5, f: () => drawTile(pi.pass ? 'door_open' : 'door_closed', x * T, y * T, S) });
-      else if (ch === 'S' || WP.ITEM_CHARS[ch]) {
-        const word = WP.ITEM_CHARS[ch]; const wanted = word && R && R.wants.has(word);
-        drawList.push({ y: y + .5, f: () => {
-          const bob = Math.sin(time * 3 + x * 1.3 + y) * T * .05; shadow((x + .5) * T, (y + .88) * T, T * .26 - bob * .15, .22);
-          const cx = (x + .5) * T, cy = (y + .5) * T + bob;
-          if (ch === 'S' || wanted) { // glow
-            const g = ctx.createRadialGradient(cx, cy, T * .1, cx, cy, T * .62); g.addColorStop(0, 'rgba(255,240,120,.85)'); g.addColorStop(1, 'rgba(255,240,120,0)');
-            ctx.fillStyle = g; ctx.fillRect(cx - T, cy - T, T * 2, T * 2);
-            ctx.save(); ctx.translate(cx, cy); ctx.rotate(time * .6); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 2; for (let k = 0; k < 8; k++) { ctx.rotate(Math.PI / 4); ctx.beginPath(); ctx.moveTo(T * .38, 0); ctx.lineTo(T * .55, 0); ctx.stroke(); } ctx.restore();
-          }
-          const k = ch === 'S' ? 'star' : { apple: 'apple', cake: 'cake', pizza: 'pizza', banana: 'banana', strawberry: 'strawberry' }[word.toLowerCase()];
-          const sc = 1 + Math.sin(time * 4 + x) * .04; drawImg(k, cx, cy + T * .42 * sc, T * .8 * sc);
-        } });
-        if ((ch === 'S' || wanted) && Math.random() < dt * 3) spark(x + .5, y + .5);
-      }
-    }
-    // dynamic: blocks + hero
-    const stBlocks = L.words.map((w, k) => ({ k, w }));
-    const hr = E.hero;
-    stBlocks.forEach(({ k, w }) => drawList.push({ y: E.blocks[k].y + .5, f: () => drawBlock(k, w, time) }));
-    drawList.push({ y: hr.y + .6, f: () => drawHero(time) });
-    drawList.sort((a, b) => a.y - b.y).forEach(o => o.f());
+    st.objs.forEach(o => { if (!isRiver(o)) drawList.push({ y: (A[o.id] ? A[o.id].y : o.y) + (isText(o.t) ? .45 : .5), o }); });
+    drawList.sort((a, b) => a.y - b.y).forEach(({ o }) => isText(o.t) ? drawBlock(o, time) : drawThing(o, time, dt));
+    // you markers
+    st.objs.forEach(o => { if (!isText(o.t) && R.you.has(o.t)) drawYouMark(o, time); });
     // particles
     for (let i = parts.length - 1; i >= 0; i--) {
       const p = parts[i]; p.life -= dt; if (p.life <= 0) { parts.splice(i, 1); continue; }
@@ -505,6 +591,7 @@ const ATLAS = /*ATLAS*/{};
       ctx.globalAlpha = a;
       if (p.kind === 'puff') { ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(px, py, s * (1.5 - a * .5), 0, 7); ctx.fill(); }
       else if (p.kind === 'drop') { ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(px, py, s, 0, 7); ctx.fill(); }
+      else if (p.kind === 'text') { ctx.font = '900 ' + s + 'px ' + FONT; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = '#fff'; ctx.strokeText(p.text, px, py); ctx.fillStyle = p.color; ctx.fillText(p.text, px, py); }
       else if (p.kind === 'spark' || p.kind === 'star') {
         ctx.save(); ctx.translate(px, py); ctx.rotate(p.rot); ctx.fillStyle = p.color; ctx.strokeStyle = 'rgba(120,70,0,.5)'; ctx.lineWidth = 1; ctx.beginPath();
         const r1 = s * (p.kind === 'star' ? 1.4 : 1.2), r2 = r1 * .38; for (let k = 0; k < 8; k++) { const r = k % 2 ? r2 : r1, an = k * Math.PI / 4; ctx.lineTo(Math.cos(an) * r, Math.sin(an) * r); } ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
@@ -512,22 +599,95 @@ const ATLAS = /*ATLAS*/{};
       ctx.globalAlpha = 1;
     }
     ctx.restore();
-    // wooden frame (9-slice)
+    // frame
     const rr = (x, y, ww, hh, r) => { ctx.moveTo(x + r, y); ctx.arcTo(x + ww, y, x + ww, y + hh, r); ctx.arcTo(x + ww, y + hh, x, y + hh, r); ctx.arcTo(x, y + hh, x, y, r); ctx.arcTo(x, y, x + ww, y, r); ctx.closePath(); };
     ctx.save(); ctx.beginPath(); rr(1, 1, w - 2, h - 2, 20); rr(FW - 3, FW - 3, w - 2 * FW + 6, h - 2 * FW + 6, 7);
     const fg = ctx.createLinearGradient(0, 0, 0, h); fg.addColorStop(0, '#ffc15a'); fg.addColorStop(.5, '#f08a24'); fg.addColorStop(1, '#c9610f');
     ctx.fillStyle = fg; ctx.fill('evenodd');
     ctx.lineJoin = 'round'; ctx.strokeStyle = '#7a3a08'; ctx.lineWidth = 3; ctx.beginPath(); rr(1.5, 1.5, w - 3, h - 3, 20); ctx.stroke(); ctx.beginPath(); rr(FW - 3, FW - 3, w - 2 * FW + 6, h - 2 * FW + 6, 7); ctx.stroke();
     ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 3; ctx.beginPath(); rr(6, 6, w - 12, h - 12, 15); ctx.stroke();
-    ctx.fillStyle = '#ffe7a0'; [[9, 9], [w - 9, 9], [9, h - 9], [w - 9, h - 9]].forEach(([bx, by]) => { ctx.beginPath(); ctx.arc(bx, by, 3.2, 0, 7); ctx.fill(); ctx.strokeStyle = '#7a3a08'; ctx.lineWidth = 1.5; ctx.stroke(); });
     ctx.restore();
   }
 
-  function drawBlock(k, w, time) {
-    const b = E.blocks[k], d = WP.WORDS[w], s = E.status[k];
-    const col = BLK[d.t], x = b.x * T, y = b.y * T; let sh = 0;
+  function explicitProps(t) { const s = new Set(R.prop[t] || []); if (R.you.has(t) && R.prop['@you']) R.prop['@you'].forEach(p => s.add(p)); return s; }
+  function wantedTypes() { const w = new Set(['STAR']); R.wants.forEach(([, x]) => w.add(x)); return w; }
+
+  function drawThing(o, time, dt) {
+    const a = A[o.id] || { x: o.x, y: o.y, sq: 0, pop: 0, hop: 0, bump: 0, face: 1 };
+    const e = WP.eff(R, o.t), ex = explicitProps(o.t), you = R.you.has(o.t);
+    let scale = 1; if (ex.has('BIG')) scale = 1.22; if (ex.has('SMALL')) scale = .74;
+    const pop = a.pop > 0 ? 1 + Math.sin((a.pop / .4) * Math.PI) * .35 : 1;
+    let cx = (a.x + .5) * T, by = (a.y + .94) * T;
+    if (a.bump > 0) cx += (a.bdx || 0) * Math.sin(a.bump * 30) * T * .06;
+    const run = e.ab.has('RUN') && !e.p.has('SLEEPY');
+    let hop = a.hop > 0 ? Math.sin((1 - a.hop / (a.big ? .32 : .24)) * Math.PI) * T * (a.big ? .45 : .16) : 0;
+    if (a.cheer) hop = Math.abs(Math.sin(time * 7)) * T * .3;
+    const fly = e.ab.has('FLY'); const flyUp = fly ? T * (.14 + Math.sin(time * 4 + o.id) * .05) : 0;
+    const here = st.objs.filter(p => p !== o && p.x === o.x && p.y === o.y && !isText(p.t));
+    const inRiver = here.some(p => p.t === 'RIVER' && WP.eff(R, 'RIVER').p.has('deep'));
+    const onMountain = here.some(p => p.t === 'MOUNTAIN');
+    // aura / glow
+    const wanted = wantedTypes().has(o.t);
+    if (wanted) {
+      const gy = by - T * .45 - flyUp; const g = ctx.createRadialGradient(cx, gy, T * .1, cx, gy, T * .62); g.addColorStop(0, 'rgba(255,240,120,.85)'); g.addColorStop(1, 'rgba(255,240,120,0)');
+      ctx.fillStyle = g; ctx.fillRect(cx - T, gy - T, T * 2, T * 2);
+      if (Math.random() < dt * 2.5) spark(a.x + .5, a.y + .5);
+    }
+    if (ex.has('HOT') || o.t === 'FIRE' && e.p.has('HOT')) { if (Math.random() < dt * 5) P({ x: a.x + .5 + rnd(-.25, .25), y: a.y + .6, vx: rnd(-.2, .2), vy: rnd(-1.5, -.7), life: .7, max: .7, size: rnd(.03, .06), color: '#ffb02e', kind: 'drop' }); }
+    if (!inRiver && !(o.t === 'DOOR' || o.t === 'WALL' || o.t === 'MOUNTAIN')) shadow(cx, (a.y + .9) * T, T * .3 * scale * (fly ? .7 : 1), fly ? .15 : .24);
+    ctx.save(); ctx.translate(cx, by - hop - flyUp);
+    if (a.sq > 0) { const s = 1 + Math.sin(a.sq * 12.5) * .12; ctx.scale(s, 2 - s); }
+    ctx.scale(scale * pop, scale * pop);
+    if (a.face < 0 && CHAR[o.t]) ctx.scale(-1, 1);
+    if (e.p.has('SLEEPY')) ctx.rotate(-.12);
+    if (ex.has('HUNGRY')) { const k = 1 + Math.abs(Math.sin(time * 9)) * .07; ctx.scale(k, 1 / k); ctx.shadowColor = '#ff3b3b'; ctx.shadowBlur = 12; }
+    else if (ex.has('COLD')) { ctx.shadowColor = '#7fdcff'; ctx.shadowBlur = 14; }
+    else if (ex.has('HOT')) { ctx.shadowColor = '#ff8a1f'; ctx.shadowBlur = 16; }
+    else if (ex.has('OPEN') && o.t !== 'DOOR') { ctx.shadowColor = '#ffe066'; ctx.shadowBlur = 14; }
+    const t = o.t, f2 = Math.floor(time * 4 + o.id) % 2;
+    if (CHAR[t]) {
+      let pose = (Math.floor(time * 1.8 + o.id) % 2) ? 'idle2' : 'idle';
+      if (a.cheer) pose = 'cheer'; else if (a.bump > 0) pose = 'bump';
+      else if (fly) pose = 'fly'; else if (inRiver) pose = 'swim'; else if (onMountain) pose = 'climb'; else if (a.hop > 0 || run) pose = 'hop';
+      const k = CHAR[t] + '_' + pose; const im = IMG[k];
+      if (im && im.naturalWidth) { const sc = Math.min(T * (pose === 'swim' ? 1.15 : pose === 'fly' ? 1.28 : 1.02) / im.naturalWidth, T * 1.18 / im.naturalHeight * (pose === 'fly' || pose === 'cheer' ? 1.15 : 1)); ctx.drawImage(im, -im.naturalWidth * sc / 2, -im.naturalHeight * sc, im.naturalWidth * sc, im.naturalHeight * sc); }
+    } else if (t === 'WALL') { const k = e.p.has('LOW') ? 'lowwall' : 'wall'; ctx.drawImage(IMG[k], -T / 2 - .5, -T * .94, T + 1, T + 1); }
+    else if (t === 'MOUNTAIN') { const k = e.p.has('LOW') ? 'hill' : 'mountain'; ctx.drawImage(IMG[k], -T / 2 - .5, -T * .94, T + 1, T + 1); }
+    else if (t === 'DOOR') { const k = e.p.has('CLOSED') && !e.p.has('LOW') ? 'door_closed' : 'door_open'; ctx.drawImage(IMG[k], -T / 2 - .5, -T * .94, T + 1, T + 1); }
+    else if (t === 'TREE') drawTree(0, 0, T);
+    else if (t === 'ICE') drawIce(0, 0, T);
+    else if (t === 'FLOWER') drawFlower(0, 0, T, time);
+    else if (t === 'ROCK') fitImg('rock', 0, 0, T * .9, T * .8);
+    else if (t === 'KEY') { ctx.rotate(Math.sin(time * 3 + o.id) * .1); fitImg('key', 0, -T * .1, T * .7, T * .6); }
+    else if (t === 'FIRE') fitImg('torch' + f2, 0, 0, T * .8, T * .95);
+    else if (t === 'FISH') fitImg('fish' + f2, 0, -T * .1, T * .8, T * .7);
+    else if (t === 'FROG') fitImg(a.hop > 0 ? 'frog1' : 'frog0', 0, 0, T * .8, T * .75);
+    else if (t === 'MOUSE') fitImg('mouse' + (run ? f2 : 0), 0, 0, T * .8, T * .7);
+    else { // star + food
+      const bob = Math.sin(time * 3 + o.x * 1.3 + o.y) * T * .05, sc = 1 + Math.sin(time * 4 + o.x) * .04;
+      fitImg(t === 'STAR' ? 'star' : t.toLowerCase(), 0, -T * .08 + bob, T * .8 * sc, T * .8 * sc);
+    }
+    ctx.shadowBlur = 0;
+    ctx.restore();
+    // status icons
+    if (e.p.has('SLEEPY')) { ctx.font = '900 ' + (T * .26) + 'px ' + FONT; ctx.fillStyle = '#4a6fb8'; ctx.textAlign = 'left'; ctx.fillText('Zz', cx + T * .2, by - T * .85 - Math.sin(time * 2) * 3); }
+    if (run) { ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 3; const d = { L: 1, R: -1, U: 0, D: 0 }[o.d]; if (d) for (let k = 0; k < 3; k++) { ctx.beginPath(); const yy = by - T * (.25 + k * .2); ctx.moveTo(cx + d * T * .38, yy); ctx.lineTo(cx + d * T * (.55 + (time * 3 % .2)), yy); ctx.stroke(); } }
+    if (ex.has('CLOSED') && t !== 'DOOR') { ctx.font = (T * .3) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('🔒', cx + T * .3, by - T * .7); }
+  }
+
+  function drawYouMark(o, time) {
+    const a = A[o.id] || o; const cx = (a.x + .5) * T, y = a.y * T - T * .12 + Math.sin(time * 5) * 3;
+    ctx.save(); ctx.fillStyle = '#ff4f9a'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(cx - T * .12, y - T * .1); ctx.lineTo(cx + T * .12, y - T * .1); ctx.lineTo(cx, y + T * .04); ctx.closePath(); ctx.stroke(); ctx.fill();
+    ctx.font = '900 ' + (T * .2) + 'px ' + FONT; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeText('I', cx, y - T * .14); ctx.fillText('I', cx, y - T * .14);
+    ctx.restore();
+  }
+
+  function drawBlock(o, time) {
+    const a = A[o.id] || { x: o.x, y: o.y, sq: 0 }; const w = wordOf(o.t), d = WP.WORDS[w], s = status[o.id];
+    const col = BLK[d.t], x = a.x * T, y = a.y * T; let sh = 0;
     if (s === 'bad') sh = Math.sin(time * 50) * 2.5;
-    const sq = b.sq; const sc = 1 + Math.sin(sq * 12.5) * .12;
+    const sc = 1 + Math.sin((a.sq || 0) * 12.5) * .12;
     const cx = x + T / 2 + sh, cy = y + T / 2;
     ctx.save();
     shadow(cx, y + T * .92, T * .4, .25);
@@ -538,40 +698,11 @@ const ATLAS = /*ATLAS*/{};
     const im = IMG['blk_' + col]; const bs = T - 4;
     if (im && im.naturalWidth) { const bh = bs * im.naturalHeight / im.naturalWidth; ctx.drawImage(im, -bs / 2, -bh / 2, bs, bh); if (s) ctx.drawImage(im, -bs / 2, -bh / 2, bs, bh); }
     ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
-    // word
     const jp = !document.body.classList.contains('nojp');
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
-    const sz = fitText(w, bs * .78, T * (w.length <= 3 ? .36 : .3), 900); const ty = jp ? -T * .08 : 0;
-    ctx.lineWidth = Math.max(3, sz * .24); ctx.strokeStyle = '#5a2f0d'; ctx.strokeText(w, 0, ty); ctx.fillStyle = '#fff'; ctx.fillText(w, 0, ty);
-    if (jp) { const jsz = fitText(d.jp, bs * .78, T * .17, 900); ctx.lineWidth = Math.max(2, jsz * .22); ctx.strokeStyle = '#5a2f0d'; ctx.strokeText(d.jp, 0, T * .24); ctx.fillStyle = '#fff6c9'; ctx.fillText(d.jp, 0, T * .24); }
-    ctx.restore();
-  }
-
-  function heroPose(time) {
-    const hr = E.hero, key = heroKey(L); let pose = 'idle', yoff = 0, swim = false;
-    const tx = Math.round(hr.x), ty = Math.round(hr.y); const ch = (L.tiles[ty] && L.tiles[ty][tx]) || '.';
-    const pi = passInfo(ch);
-    if (hr.cheer) pose = 'cheer';
-    else if (hr.bump > 0) pose = 'bump';
-    else if (ch === 'R' && !pi.pass) { pose = E.fly ? 'fly' : 'swim'; swim = !E.fly; }
-    else if (ch === 'M' && !pi.pass) pose = E.fly ? 'fly' : 'climb';
-    else if (ch === 'W' && !pi.pass) pose = E.fly ? 'fly' : 'hop';
-    else if (hr.hop > 0) pose = 'hop';
-    else pose = (Math.floor(time * 1.8) % 2) ? 'idle2' : 'idle';
-    return { pose, key, swim, ch };
-  }
-  function drawHero(time) {
-    const hr = E.hero, { pose, key, swim, ch } = heroPose(time);
-    let cx = (hr.x + .5) * T, by = (hr.y + .94) * T; let hop = 0, bob = 0;
-    if (hr.hop > 0) hop = Math.sin((1 - hr.hop / .26) * Math.PI) * T * (hr.hopBig ? .42 : .22);
-    if (hr.cheer) hop = Math.abs(Math.sin(time * 7)) * T * .3;
-    if (pose === 'fly') bob = Math.sin(time * 5) * T * .06 + T * .12; if (swim) bob = Math.sin(time * 4) * T * .04;
-    if (hr.bump > 0) cx += hr.bdx * Math.sin(hr.bump * 30) * T * .06;
-    shadow(cx, (hr.y + .92) * T, T * (.3 - hop / T * .2), swim ? 0 : .28);
-    ctx.save(); ctx.translate(cx, by - hop - bob);
-    const flip = hr.face < 0 ? -1 : 1; ctx.scale(flip, 1);
-    const k = key + '_' + pose; const wTarget = T * (pose === 'swim' ? 1.15 : pose === 'fly' ? 1.28 : 1.02);
-    const im = IMG[k]; if (im && im.naturalWidth) { const sc = Math.min(wTarget / im.naturalWidth, (T * 1.18) / im.naturalHeight * (pose === 'fly' || pose === 'cheer' ? 1.15 : 1)); const w2 = im.naturalWidth * sc, h2 = im.naturalHeight * sc; ctx.drawImage(im, -w2 / 2, -h2, w2, h2); }
+    const sz = fitText(w, bs * .8, T * (w.length <= 3 ? .36 : .3), 900); const ty = jp ? -T * .08 : 0;
+    ctx.lineWidth = Math.max(3, sz * .24); ctx.strokeStyle = '#1d2a38'; ctx.strokeText(w, 0, ty); ctx.fillStyle = '#fff'; ctx.fillText(w, 0, ty);
+    if (jp) { const jsz = fitText(d.jp, bs * .8, T * .17, 900); ctx.lineWidth = Math.max(2, jsz * .22); ctx.strokeStyle = '#1d2a38'; ctx.strokeText(d.jp, 0, T * .24); ctx.fillStyle = '#fff6c9'; ctx.fillText(d.jp, 0, T * .24); }
     ctx.restore();
   }
 
@@ -598,10 +729,9 @@ const ATLAS = /*ATLAS*/{};
   function loop(now) {
     const dt = Math.min(.05, (now - last) / 1000); last = now; const time = now / 1000; frame++;
     if (frame % 2 === 0 || !L) drawBg(time);
-    if (L && E && !$('#game').classList.contains('hidden')) {
+    if (L && !$('#game').classList.contains('hidden')) {
       const k = 1 - Math.exp(-dt * 20);
-      E.blocks.forEach((b, i) => { b.x += (st.p[2 * i] - b.x) * k; b.y += (st.p[2 * i + 1] - b.y) * k; if (b.sq > 0) b.sq = Math.max(0, b.sq - dt); });
-      const h = E.hero; h.x += (st.hx - h.x) * k; h.y += (st.hy - h.y) * k; if (h.hop > 0) h.hop = Math.max(0, h.hop - dt); if (h.bump > 0) h.bump = Math.max(0, h.bump - dt);
+      st.objs.forEach(o => { const a = A[o.id]; if (!a) return; a.x += (o.x - a.x) * k; a.y += (o.y - a.y) * k; ['sq', 'hop', 'bump', 'pop'].forEach(f => { if (a[f] > 0) a[f] = Math.max(0, a[f] - dt); }); if (!a.hop) a.big = 0; });
       drawBoard(time, dt);
     }
     requestAnimationFrame(loop);
@@ -631,7 +761,9 @@ const ATLAS = /*ATLAS*/{};
     const k = e.key.toLowerCase();
     const map = { arrowup: 'U', w: 'U', arrowdown: 'D', s: 'D', arrowleft: 'L', a: 'L', arrowright: 'R', d: 'R' };
     if (!$('#win').classList.contains('hidden')) { if (k === 'enter' && $('#wNext')) $('#wNext').click(); return; }
+    if (!$('#card').classList.contains('hidden')) { if (k === 'enter' || k === ' ') { e.preventDefault(); $('#cardOk').click(); } return; }
     if (map[k]) { e.preventDefault(); go(map[k]); }
+    else if (k === ' ' || k === '.') { e.preventDefault(); go('W'); }
     else if (k === 'z' || k === 'u' || k === 'backspace') { e.preventDefault(); undo(); }
     else if (k === 'r') restart();
     else if (k === 'h') { hintOn = !hintOn; refresh(true); }
@@ -641,7 +773,7 @@ const ATLAS = /*ATLAS*/{};
   let tx = 0, ty = 0;
   $('#boardWrap').addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
   $('#boardWrap').addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty; if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return; go(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'R' : 'L') : (dy > 0 ? 'D' : 'U')); }, { passive: true });
-  $('#bMenu').onclick = showMenu; $('#bUndo').onclick = undo; $('#bReset').onclick = restart;
+  $('#bMenu').onclick = showMenu; $('#bWait').onclick = () => go('W'); $('#bUndo').onclick = undo; $('#bReset').onclick = restart;
   $('#bHint').onclick = () => { hintOn = !hintOn; refresh(true); };
   $('#bJp').onclick = () => { document.body.classList.toggle('nojp'); try { localStorage.setItem('wordpush_nojp', document.body.classList.contains('nojp') ? '1' : '0'); } catch (e) {} };
   $('#bSnd').onclick = () => { soundOn = !soundOn; try { localStorage.setItem('wordpush_sound', soundOn ? '1' : '0'); } catch (e) {} $('#bSnd').innerHTML = '<img class="ic" src="' + src(soundOn ? 'i_on' : 'i_off') + '">' + (soundOn ? 'おと ON' : 'おと OFF'); sfx('step'); };
@@ -657,19 +789,21 @@ const ATLAS = /*ATLAS*/{};
   const SL = [
     { t: 'ようこそ!', g: 'cheer', say: 'こんにちは! いっしょに あそぼう!<small>⭐ に さわったら クリア だよ。</small>', vis: () => im('I_idle', 'hh') + '<span class="arrow">▶ ▶ ▶</span>' + im('star', 'hh') },
     { t: 'あるきかた', g: 'idle', say: '<em>↑ ↓ ← →</em> の キーで あるくよ。<small>W A S D でも いいよ。スマホは ゆびで スワイプ!</small>',
-      vis: () => '<div style="position:relative;width:200px;height:130px">' + [['arr_u', 74, 0], ['arr_l', 14, 62], ['arr_d', 74, 62], ['arr_r', 134, 62]].map(a => '<img src="' + src(a[0]) + '" style="position:absolute;width:56px;left:' + a[1] + 'px;top:' + a[2] + 'px">').join('') + '</div>' },
+      vis: () => '<div style="position:relative;width:200px;height:130px">' + [['i_up', 74, 0], ['i_left', 14, 62], ['i_down', 74, 62], ['i_right', 134, 62]].map(a => '<img src="' + src(a[0]) + '" style="position:absolute;width:56px;padding:12px;background:#1b8ff0;border:4px solid #0b4a96;border-radius:50%;box-sizing:border-box;left:' + a[1] + 'px;top:' + a[2] + 'px">').join('') + '</div>' },
     { t: 'ブロックを おしてみよう', g: 'hop', say: 'ブロックに ぶつかると、<em>おせる</em>よ!<small>ブロックには ことばが かいて あるよ。</small>',
       vis: () => im('I_idle', 'hh') + tb('CAT') + '<span class="arrow">▶</span>' + '<span style="width:24px"></span>' + tb('CAT') },
     { t: 'ブロックは ことば!', g: 'idle', say: 'ブロックの いろには いみが あるよ。<small>ならべて、えいごの ぶんを つくろう!</small>',
-      vis: () => [['DOG', 'なまえ', '#f59a2e'], ['CAN', 'つなぐ', '#e9b81c'], ['SWIM', 'うごき', '#ee6f8c'], ['OPEN', 'ようす', '#4fc27a']].map(a => col(tb(a[0]), lab(a[1], a[2]))).join('') },
+      vis: () => [['DOG', 'なまえ', '#3d8be0'], ['CAN', 'つなぐ', '#e3a914'], ['SWIM', 'うごき', '#e2494b'], ['OPEN', 'ようす', '#2fb36a']].map(a => col(tb(a[0]), lab(a[1], a[2]))).join('') },
     { t: 'えいごの ならびかた', g: 'cheer', say: 'えいごは <em>S → V → O</em> の じゅんばん!<small>S＝だれが　V＝どうする　O＝なにを</small>',
-      vis: () => '<div class="row">' + col(tb('I'), lab('S だれが', '#f59a2e')) + col(tb('WANT'), lab('V どうする', '#e9b81c')) + col(tb('APPLE'), lab('O なにを', '#f59a2e')) + '<span class="eq">＝ わたしは リンゴが ほしい</span></div>' },
+      vis: () => '<div class="row">' + col(tb('I'), lab('S だれが', '#3d8be0')) + col(tb('WANT'), lab('V どうする', '#e3a914')) + col(tb('APPLE'), lab('O なにを', '#3d8be0')) + '<span class="eq">＝ わたしは リンゴが ほしい</span></div>' },
     { t: 'じゅんばん だいじ!', g: 'bump', say: 'ならびが ちがうと、ぶんに ならないよ。<small>にほんごと ちがうから、きを つけてね。</small>',
       vis: () => '<div class="vcol" style="gap:14px"><div class="row"><span class="ok">○</span>' + tb('I') + tb('WANT') + tb('APPLE') + '</div><div class="row"><span class="ng">×</span>' + tb('APPLE') + tb('WANT') + tb('I') + '</div></div>' },
     { t: 'よむ むき', g: 'idle', say: 'ぶんは <em>ひだり → みぎ</em>、<em>うえ → した</em> に よむよ。<small>ブロックは たてにも ならべられるよ。</small>',
       vis: () => '<div class="row">' + tb('DOG') + tb('CAN') + tb('SWIM') + '</div><span style="width:30px"></span><div class="vcol">' + tb('DOG') + tb('CAN') + tb('SWIM') + '</div>' },
     { t: 'ぶんが できると…', g: 'cheer', say: 'ぶんが できると、<b class="g">みどりに ひかる</b>よ。<small>ふしぎな ちからが でるよ! たとえば DOOR IS OPEN → ドアが あく!</small>',
       vis: () => im('door_closed', 'hh') + '<span class="arrow">▶</span>' + '<div class="row">' + tb('DOOR') + tb('IS') + tb('OPEN') + '</div><span class="arrow">▶</span>' + im('door_open', 'hh') },
+    { t: 'ことばで せかいが かわる!', g: 'cheer', say: 'ぶんを かえると、<em>ふしぎな こと</em>が おこるよ!<small>I AM DOG → あなたが イヌに!　WALL IS STAR → かべが ほしに!　いろいろ ためして みよう。⭐ への みちは 1つ じゃないよ。</small>',
+      vis: () => '<div class="vcol">' + '<div class="row">' + tb('I') + tb('AM') + tb('DOG') + '</div>' + im('DOG_cheer', 's') + '</div><div class="vcol"><div class="row">' + tb('WALL') + tb('IS') + tb('STAR') + '</div>' + im('star', 's') + '</div>' },
     { t: 'やさしい えいご', g: 'idle', say: 'この ゲームの えいごは、<em>かんたんに して ある</em>よ。<small>ほんとうの えいごは「The door is open.」みたいに a や the が つくよ。ぜんぶ おおきい もじで かいて あるよ。</small>',
       vis: () => '<div class="vcol"><div class="row">' + tb('DOOR') + tb('IS') + tb('OPEN') + '</div>' + lab('ゲームの えいご', '#e9b81c') + '</div><span class="arrow">≒</span><div class="vcol"><span style="font-size:30px;font-weight:900">The door is open.</span>' + lab('ほんとうの えいご', '#4cb8ff') + '</div>' },
     { t: 'こまった ときは', g: 'bump', say: 'まちがえても だいじょうぶ! なんどでも やりなおせるよ。',
@@ -709,7 +843,7 @@ const ATLAS = /*ATLAS*/{};
     if (m && PARSED[+m[1] - 1]) startLevel(+m[1] - 1); else { showMenu(); let seen = '1'; try { seen = localStorage.getItem('wordpush_tut'); } catch (e) {} if (!seen) openTut(); }
     requestAnimationFrame(loop);
   });
-  window.__wp = { go, undo, restart, startLevel, openTut, get state() { return { st, moves, idx }; } };
+  window.__wp = { go, undo, restart, startLevel, openTut, get won() { return won; }, get state() { return { st, moves, idx }; } };
 })();
 </script>
 </body>
