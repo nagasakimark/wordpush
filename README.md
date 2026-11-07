@@ -1,9 +1,11 @@
 # Word Push! ことばブロック
 
-A Baba Is You-style sentence puzzle for NEW HORIZON Elementary 5–6 (2024) vocabulary. Kids push word blocks into simple English sentences (subject → verb → object), and every sentence changes how the world works. 43 levels in 9 chapters, plus two sandboxes. Single-file game.
+A Baba Is You-style sentence puzzle for NEW HORIZON Elementary 5–6 (2024) vocabulary. Kids push word blocks into simple English sentences (subject → verb → object), and every sentence changes how the world works. 46 levels in 10 chapters: the first eight teach one idea at a time, chapter 9 is a set of big open puzzle stages, and chapter 10 is two large playgrounds. Single-file game.
 
 - Play: open `index.html` (works on Chromebooks, no install). GitHub Pages serves it from `main` / root.
-- Edit levels: `src/levels.js` (ASCII maps), check with `node src/solve.js [level numbers]` (can it be won?) and `node src/check.js` (can it be won *without* moving any words? it should not be), `node src/test_not.js` (NOT rules), then `python3 src/build.py` (solves every level for the par counts, cached in `src/solutions.json`) to rebuild `index.html`.
+- Edit levels: `src/levels.js` (ASCII maps), check with `node src/solve.js [level numbers]` (can it be won?) and `node src/check.js` (can it be won *without* moving any words? it should not be), `node src/test_not.js` (NOT rules), then `python3 src/build.py` (solves each level once for the best move count, cached per level in `src/solutions.json`) to rebuild `index.html`.
+- Big stages (chapter 9) and playgrounds (chapter 10) are too open for a brute-force solver, so they are laid out from coordinates in `src/bigdefs.js` and each carries a scripted `solution`. `src/plan.js` writes those solutions (`walk`, `shove`, and `place(word, x, y)`, which moves one block while everything else stays put) and replays them through the real engine. `levels.js` already contains the result; `bigdefs.js` is kept as the readable source of the layouts. Stages with no proven best move count show no "best" and no star rating.
+- Held arrow keys move one step every 140 ms, like repeated taps (no OS key-repeat delay or burst). The player is always drawn in front of blocks, trees and doors.
 
 ## What sentences can do
 Everything on the board is an object, and the word blocks decide what each object does. Many levels have more than one way to win.

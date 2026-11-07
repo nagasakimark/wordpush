@@ -377,6 +377,7 @@ const ATLAS = /*ATLAS*/{};
     $('#bookCount').textContent = Object.keys(found).filter(k => k[0] !== '!').length;
   }
   function showMenu() {
+    holdClear();
     if (L && L.chapter) menuCh = L.chapter;
     buildMenu(); $('#game').classList.add('hidden'); $('#win').classList.add('hidden'); $('#card').classList.add('hidden'); $('#menu').classList.remove('hidden'); L = null;
     try { history.replaceState(null, '', location.pathname); } catch (e) {}
@@ -458,12 +459,13 @@ const ATLAS = /*ATLAS*/{};
     const m = $('#msg'); m.className = 'panel';
     if (!yt.length && moves > 0) { m.classList.add('warn'); m.textContent = 'だれも うごかせない! もどす (Z) か やりなおし (R) で もどろう。'; }
     else if (R.conflicts.length) { m.classList.add('warn'); m.textContent = '⚠ はんたいの ことばが ぶつかって、きえちゃった! (' + R.conflicts.join(', ') + ')'; }
-    else if (R.bad.length && moves > 0) { m.classList.add('warn'); m.innerHTML = '✗ ' + sentHTML(R.bad[0].text) + '<br>' + MSG[R.bad[0].code]; }
+    else if (R.bad.length && moves > 0) { m.classList.add('warn'); m.innerHTML = '<div><div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-bottom:4px">✗ ' + sentHTML(R.bad[0].text) + '</div>' + MSG[R.bad[0].code] + '</div>'; }
     else if (hintOn) { m.classList.add('hint'); m.textContent = '💡 ' + L.hint; }
     else m.textContent = L.tip;
   }
 
   // ---------- input ----------
+  let repeating = false;
   function go(dir) {
     if (locked || !L || !$('#card').classList.contains('hidden')) return;
     if (dir === 'W' && !L.hasRun) return;
@@ -472,7 +474,7 @@ const ATLAS = /*ATLAS*/{};
     const ns = WP.move(L, st, dir === 'W' ? null : dir, info);
     if (!ns) {
       prevYou.forEach(o => { const a = A[o.id]; if (a) { a.bump = .35; a.bdx = (WP && { L: -1, R: 1 }[dir]) || 0; if (dir === 'L' || dir === 'R') a.face = dir === 'L' ? -1 : 1; } });
-      sfx('bump'); return;
+      if (!repeating) sfx('bump'); return;
     }
     hist.push(st); st = ns; moves++;
     prevYou.forEach(o => { const a = A[o.id]; if (a && (dir === 'L' || dir === 'R')) a.face = dir === 'L' ? -1 : 1; });
@@ -526,8 +528,8 @@ const ATLAS = /*ATLAS*/{};
       }, 800);
       return;
     }
-    const par = PAR[idx] || moves;
-    const stars = moves <= par * 1.4 ? 3 : moves <= par * 2.5 ? 2 : 1;
+    const hasPar = !!PAR[idx] && mode === 'main'; const par = PAR[idx] || moves;
+    const stars = !hasPar ? 3 : moves <= par * 1.4 ? 3 : moves <= par * 2.5 ? 2 : 1; // open stages have no proven best, so no move-count rating
     const sents = R.sentences.filter(s => s.effect).map(s =>
       '<div class="sent ok"><div class="row">' + sentHTML(s.text) + '</div><div class="jp">' + WP.sentenceJP(s) + '</div></div>').join('');
     const last = idx >= PARSED.length - 1;
@@ -535,7 +537,7 @@ const ATLAS = /*ATLAS*/{};
       if (!won) return;
       $('#winbox').innerHTML = '<h2>できた!</h2><img class="hero" src="' + pic + '">' +
         '<div class="stars">' + [0, 1, 2].map(i => '<img src="' + src(i < stars ? 'star_on' : 'star_off') + '">').join('') + '</div>' +
-        '<div class="stat">' + moves + ' て (ベスト ' + par + ' て)　ほかの やりかたも あるかも!</div><div class="wsents">' + sents + '</div>' +
+        '<div class="stat">' + moves + ' て' + (hasPar ? ' (ベスト ' + par + ' て)' : '') + '　ほかの やりかたも あるかも!</div><div class="wsents">' + sents + '</div>' +
         '<div class="btns"><button class="sbtn blue" id="wMenu">メニュー</button><button class="sbtn red" id="wAgain">もういちど</button>' +
         (last ? '' : '<button class="sbtn green" id="wNext">つぎへ ▶</button>') + '</div>';
       $('#win').classList.remove('hidden');
@@ -656,7 +658,8 @@ const ATLAS = /*ATLAS*/{};
 
     const drawList = [];
     const LOW_LAYER = { DOOR: 1, FLOWER: 1, STAR: 1, KEY: 1, APPLE: 1, BANANA: 1, CAKE: 1, PIZZA: 1, STRAWBERRY: 1, FIRE: 1 };
-    st.objs.forEach(o => { if (isRiver(o)) return; const layer = isText(o.t) ? .2 : CHAR[o.t] || o.t === 'FISH' || o.t === 'FROG' || o.t === 'MOUSE' ? .4 : LOW_LAYER[o.t] ? 0 : .2; drawList.push({ y: Math.round(A[o.id] ? A[o.id].y : o.y) + layer, o }); });
+    st.objs.forEach(o => { if (isRiver(o)) return; const layer = isText(o.t) ? .2 : CHAR[o.t] || o.t === 'FISH' || o.t === 'FROG' || o.t === 'MOUSE' ? .4 : LOW_LAYER[o.t] ? 0 : .2; const isChar = !isText(o.t) && (CHAR[o.t] || o.t === 'FISH' || o.t === 'FROG' || o.t === 'MOUSE'); const tier = isText(o.t) ? 0 : R.isYou(o) ? 2000 : isChar ? 1000 : 0; drawList.push({ y: tier + Math.round(A[o.id] ? A[o.id].y : o.y) + layer, o }); });
+    // props and blocks first, then creatures, then whatever you control: the player is never hidden behind a block, tree or door
     drawList.sort((a, b) => a.y - b.y).forEach(({ o }) => isText(o.t) ? drawBlock(o, time) : drawThing(o, time, dt));
     // you markers
     st.objs.forEach(o => { if (R.isYou(o)) drawYouMark(o, time); });
@@ -839,14 +842,29 @@ const ATLAS = /*ATLAS*/{};
     const map = { arrowup: 'U', w: 'U', arrowdown: 'D', s: 'D', arrowleft: 'L', a: 'L', arrowright: 'R', d: 'R' };
     if (!$('#win').classList.contains('hidden')) { if (k === 'enter' && $('#wNext')) $('#wNext').click(); return; }
     if (!$('#card').classList.contains('hidden')) { if (k === 'enter' || k === ' ') { e.preventDefault(); $('#cardOk').click(); } return; }
-    if (map[k]) { e.preventDefault(); go(map[k]); }
+    if (map[k]) { e.preventDefault(); if (!e.repeat) holdStart(map[k], k); }
     else if (k === ' ' || k === '.') { e.preventDefault(); go('W'); }
     else if (k === 'z' || k === 'u' || k === 'backspace') { e.preventDefault(); undo(); }
     else if (k === 'r') restart();
     else if (k === 'h') { hintOn = !hintOn; refresh(true); }
     else if (k === 'escape') showMenu();
   });
-  document.querySelectorAll('#dpad button').forEach(b => b.addEventListener('pointerdown', e => { e.preventDefault(); go(b.dataset.d); }));
+  // Held keys: one step every STEP_MS (the same pace as tapping), instead of the OS key-repeat (long pause, then a burst).
+  const STEP_MS = 140; let held = [], holdTimer = null;
+  function holdTick() { if (!held.length) return; repeating = true; try { go(held[held.length - 1].d); } finally { repeating = false; } }
+  function holdStart(d, id) {
+    held = held.filter(h => h.id !== id); held.push({ d, id });
+    go(d); clearInterval(holdTimer); holdTimer = setInterval(holdTick, STEP_MS);
+  }
+  function holdStop(id) { held = held.filter(h => h.id !== id); if (!held.length) { clearInterval(holdTimer); holdTimer = null; } }
+  function holdClear() { held = []; clearInterval(holdTimer); holdTimer = null; }
+  document.addEventListener('keyup', e => holdStop(e.key.toLowerCase()));
+  window.addEventListener('blur', holdClear);
+  document.addEventListener('visibilitychange', holdClear);
+  document.querySelectorAll('#dpad button').forEach(b => {
+    b.addEventListener('pointerdown', e => { e.preventDefault(); holdStart(b.dataset.d, 'pad'); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => b.addEventListener(ev, () => holdStop('pad')));
+  });
   let tx = 0, ty = 0;
   $('#boardWrap').addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
   $('#boardWrap').addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty; if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return; go(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'R' : 'L') : (dy > 0 ? 'D' : 'U')); }, { passive: true });
