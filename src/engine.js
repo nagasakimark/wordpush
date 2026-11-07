@@ -21,15 +21,16 @@ const WP = (function () {
     CAN: { t: 'can', jp: 'できる' }, "CAN'T": { t: 'cant', jp: 'できない' },
     WANT: { t: 'want', jp: 'ほしい' }, WANTS: { t: 'wants', jp: 'ほしい' },
     HAVE: { t: 'have', jp: 'もっている' }, HAS: { t: 'has', jp: 'もっている' }, AND: { t: 'and', jp: 'と' },
+    NOT: { t: 'not', jp: 'じゃない' },
     SWIM: { t: 'verb', jp: 'およぐ', abil: 'およげる', neg: 'およげない' },
     FLY: { t: 'verb', jp: 'とぶ', abil: 'とべる', neg: 'とべない' },
     JUMP: { t: 'verb', jp: 'ジャンプ', abil: 'ジャンプできる', neg: 'ジャンプできない' },
     CLIMB: { t: 'verb', jp: 'のぼる', abil: 'のぼれる', neg: 'のぼれない' },
     RUN: { t: 'verb', jp: 'はしる', abil: 'はしる', neg: 'はしれない' },
-    BIG: { t: 'adj', jp: 'おおきい' }, SMALL: { t: 'adj', jp: 'ちいさい' }, LOW: { t: 'adj', jp: 'ひくい' },
-    HOT: { t: 'adj', jp: 'あつい' }, COLD: { t: 'adj', jp: 'つめたい' },
-    OPEN: { t: 'adj', jp: 'あいている' }, CLOSED: { t: 'adj', jp: 'しまっている' },
-    HUNGRY: { t: 'adj', jp: 'はらぺこ' }, SLEEPY: { t: 'adj', jp: 'ねむい' }
+    BIG: { t: 'adj', jp: 'おおきい', no: 'おおきく ない' }, SMALL: { t: 'adj', jp: 'ちいさい', no: 'ちいさく ない' }, LOW: { t: 'adj', jp: 'ひくい', no: 'ひくく ない' },
+    HOT: { t: 'adj', jp: 'あつい', no: 'あつく ない' }, COLD: { t: 'adj', jp: 'つめたい', no: 'つめたく ない' },
+    OPEN: { t: 'adj', jp: 'あいている', no: 'あいて いない' }, CLOSED: { t: 'adj', jp: 'しまっている', no: 'しまって いない' },
+    HUNGRY: { t: 'adj', jp: 'はらぺこ', no: 'はらぺこ じゃない' }, SLEEPY: { t: 'adj', jp: 'ねむい', no: 'ねむく ない' }
   };
   const VERBS = { IS: 1, AM: 1, ARE: 1, CAN: 1, "CAN'T": 1, WANT: 1, WANTS: 1, HAVE: 1, HAS: 1 };
   const PRON = { HE: 'BOY', SHE: 'GIRL' };
@@ -119,13 +120,15 @@ const WP = (function () {
     if (strict && err) return null;
     let k = j + 1; const objs = [];
     const okw = w => strict ? objOk(verb, w) : (cat(w) === 'noun' || cat(w) === 'adj' || cat(w) === 'verb');
+    let neg = false;
+    if (k < n && run[k].w === 'NOT' && (verb === 'IS' || verb === 'AM' || verb === 'ARE')) { neg = true; k++; }
     if (k >= n || !okw(run[k].w)) return null;
     objs.push(run[k].w); k++;
-    while (k + 1 < n && run[k].w === 'AND' && okw(run[k + 1].w)) { objs.push(run[k + 1].w); k += 2; }
+    if (!neg) while (k + 1 < n && run[k].w === 'AND' && okw(run[k + 1].w)) { objs.push(run[k + 1].w); k += 2; }
     let code = err;
     if (!code && objs.some(o => !objOk(verb, o))) code = 'nosense';
     if (!code && (verb === 'AM') && objs.some(o => o === 'I')) code = 'nosense';
-    return { subj, verb, objs, kind, ids: run.slice(i, k).map(r => r.id), text: run.slice(i, k).map(r => r.w).join(' '), code, end: k };
+    return { subj, verb, objs, neg, kind, ids: run.slice(i, k).map(r => r.id), text: run.slice(i, k).map(r => r.w).join(' '), code, end: k };
   }
   function readRun(run, out) {
     const covered = new Set();
@@ -167,14 +170,19 @@ const WP = (function () {
       }
     }
     // derive
-    const R = { sentences: out.sentences, bad: out.bad, you: new Set(), prop: {}, can: {}, cant: {}, wants: [], has: {}, xf: {}, lock: new Set(), conflicts: [] };
+    const R = { sentences: out.sentences, bad: out.bad, you: new Set(), notYou: new Set(), prop: {}, notProp: {}, can: {}, cant: {}, wants: [], has: {}, xf: {}, notXf: {}, lock: new Set(), vanish: new Set(), conflicts: [] };
     const add = (m, k, v) => { (m[k] = m[k] || new Set()).add(v); };
     const subjTypes = s => s.subj.map(w => w === 'I' ? '@you' : (PRON[w] || w));
     for (const s of out.sentences) {
       const subs = subjTypes(s);
       for (const sub of subs) for (const o of s.objs) {
         const c = cat(o);
-        if (s.verb === 'AM' && c === 'noun') R.you.add(o);
+        if (s.neg) {
+          if (s.verb === 'AM' && c === 'noun') R.notYou.add(o);
+          else if (c === 'adj') add(R.notProp, sub, o);
+          else if (c === 'noun') { if (o === sub) R.vanish.add(sub); else add(R.notXf, sub, o); }
+        }
+        else if (s.verb === 'AM' && c === 'noun') R.you.add(o);
         else if ((s.verb === 'IS' || s.verb === 'ARE' || s.verb === 'AM') && c === 'adj') add(R.prop, sub, o);
         else if ((s.verb === 'IS' || s.verb === 'ARE') && c === 'noun') { if (o === sub) R.lock.add(sub); else add(R.xf, sub, o); }
         else if (s.verb === 'CAN') add(R.can, sub, o);
@@ -184,8 +192,10 @@ const WP = (function () {
       }
     }
     R.amMode = !!L.hasAM;
-    R.isYou = o => !isText(o.t) && ((R.amMode && R.you.has(o.t)) || !!o.me);
+    R.isYou = o => !isText(o.t) && !R.notYou.has(o.t) && ((R.amMode && R.you.has(o.t)) || !!o.me);
     R.lock.forEach(t => delete R.xf[t]);
+    Object.keys(R.notXf).forEach(t => { if (R.xf[t]) R.notXf[t].forEach(o => R.xf[t].delete(o)); });
+    R.notYou.forEach(t => R.you.delete(t));
     // conflicts (opposites written for the same thing cancel)
     Object.keys(R.prop).forEach(t => {
       const p = R.prop[t];
@@ -194,7 +204,7 @@ const WP = (function () {
     const present = new Set(st.objs.filter(o => !isText(o.t)).map(o => o.t));
     const anyYou = st.objs.some(o => R.isYou(o));
     out.sentences.forEach(s => {
-      s.effect = subjTypes(s).some(t => t === '@you' ? anyYou : present.has(t)) || (s.verb === 'AM');
+      s.effect = subjTypes(s).some(t => t === '@you' ? anyYou : present.has(t)) || (s.verb === 'AM') || (s.neg && s.objs.length === 1 && s.subj.length === 1 && s.subj[0] === s.objs[0]);
     });
     R.effCache = {};
     return R;
@@ -207,8 +217,11 @@ const WP = (function () {
     const p = new Set(R.prop[t] || []);
     if (you && R.prop['@you']) R.prop['@you'].forEach(a => p.add(a));
     ['BIG', 'HOT', 'OPEN'].forEach(a => { if (p.has(a) && p.has(OPP[a])) { p.delete(a); p.delete(OPP[a]); } });
+    const no = new Set(R.notProp[t] || []); if (you && R.notProp['@you']) R.notProp['@you'].forEach(a => no.add(a));
+    no.forEach(a => p.delete(a));
     const explicit = new Set(p);
     (DEFAULTS[t] || []).forEach(d => {
+      if (no.has(d)) return;
       if (OPP[d] && explicit.has(OPP[d])) return;
       if (explicit.has('LOW') && (d === 'BIG' || d === 'steep' || d === 'deep')) return;
       if (d === 'deep' && explicit.has('COLD')) return; // frozen river
@@ -342,6 +355,7 @@ const WP = (function () {
     // interactions
     const dead = new Set(); const why = {};
     const byCell = new Map();
+    if (R.vanish.size) st.objs.forEach(o => { if (!isText(o.t) && R.vanish.has(o.t)) { dead.add(o); why[o.id] = 'vanish'; } });
     st.objs.forEach(o => { if (isText(o.t)) return; const k = o.y * L.w + o.x; (byCell.get(k) || byCell.set(k, []).get(k)).push(o); });
     const kill = (o, reason) => { if (!dead.has(o)) { dead.add(o); why[o.id] = reason; } };
     for (const objs of byCell.values()) {
@@ -404,6 +418,12 @@ const WP = (function () {
   const list = (ws, f) => ws.map(f || jw).join(' と ');
   function sentenceJP(s) {
     const S = list(s.subj); const objs = s.objs;
+    if (s.neg) {
+      const o = objs[0];
+      if (s.verb === 'AM') return cat(o) === 'noun' ? 'わたしは ' + jw(o) + ' じゃない (もう うごかせない)' : 'わたしは ' + WORDS[o].no;
+      if (cat(o) === 'adj') return S + 'は ' + WORDS[o].no;
+      return s.subj.length === 1 && s.subj[0] === o ? S + 'は きえる!' : S + 'は ' + jw(o) + ' に ならない';
+    }
     if (s.verb === 'AM' && objs.every(o => cat(o) === 'noun')) return 'わたしは ' + list(objs) + ' (に なる!)';
     if (['IS', 'ARE', 'AM'].includes(s.verb)) {
       const adj = objs.filter(o => cat(o) === 'adj'), nn = objs.filter(o => cat(o) === 'noun');
