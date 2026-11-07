@@ -25,7 +25,7 @@ const LEVELS = [
   gp: "HOT と COLD",
   hero: "BOY",
   tip: "ひは あつい! さわると やけど しちゃう。ことばで なんとか しよう!",
-  hint: "FIRE IS COLD で ひを けす? BOY IS HOT で あつさに つよく なる? ほかにも ある かも!",
+  hint: "FIRE IS COLD で ひを けそう。FIRE IS BOY で ひを おとこのこに かえる ことも できるよ。",
   words: ["HOT", "FIRE", "IS", "COLD", "BOY"],
   chapter: 1,
   map: [
@@ -417,7 +417,7 @@ const LEVELS = [
   gp: "SLEEPY",
   hero: "BOY",
   tip: "はらぺこ ネコが ほそい みちを いったり きたり。いっしょに はいったら たべられちゃう!",
-  hint: "CAT IS SLEEPY で ねむらせる? HUNGRY を どかす? どこで ねむらせるかも だいじ!",
+  hint: "CAT IS HUNGRY を こわそう。ひだりの ことばを うえに おして みよう。",
   solution: "RRUUDDRRRUUURRRR",
   words: ["CAT", "IS", "HUNGRY", "SLEEPY", "CAT", "CAN", "RUN"],
   face: [[6, 1, "D"]],
@@ -449,8 +449,8 @@ const LEVELS = [
 { title: "いわの なかの かぎ",
   gp: "HAS + OPEN",
   hero: "BOY",
-  tip: "いわを かわに しずめると…? かぎは OPEN なら ドアを あけられる。",
-  hint: "ROCK HAS KEY を つくって、いわを かわへ。でた かぎを ドアへ。",
+  tip: "OPEN の ものが ドアに ぶつかると、ふたつとも きえるよ。いわも OPEN に できる?",
+  hint: "ROCK IS OPEN を つくって、いわを ドアに おそう。ROCK IS KEY と KEY IS OPEN でも できるよ。",
   words: ["ROCK","KEY","HAS","IS","KEY","OPEN"],
   chapter: 6,
   map: [
@@ -482,7 +482,7 @@ const LEVELS = [
   hero: "BOY",
   intro: "ARE",
   tip: "WALL AND TREE は「ふたつ」。だから IS じゃなくて ARE!",
-  hint: "WALL AND TREE ARE SMALL。",
+  hint: "WALL IS TREE で かべを きに かえて、TREE IS SMALL で きを おそう。",
   words: ["WALL","AND","TREE","IS","ARE","SMALL"],
   chapter: 6,
   map: [
@@ -561,7 +561,7 @@ const LEVELS = [
   hero: "BOY",
   sandbox: true,
   tip: "あそびば! いろんな ぶんを つくって、なにが おこるか ためそう。⭐ への みちは いくつも あるよ。",
-  hint: "WALL IS STAR? I AM DOG? I CAN SWIM? DOOR が ない かべも あるよ…。",
+  hint: "WALL IS STAR? WALL IS OPEN? いろんな ぶんを ためして みよう。",
   words: ["I","AM","BOY","WALL","IS","OPEN","CAN","DOG","COLD","STAR","SWIM","RIVER"],
   chapter: 8,
   map: [
